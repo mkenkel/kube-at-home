@@ -88,11 +88,16 @@ Options for 4 nodes with 1 GbE:
 - [ ] `kube-prometheus-stack` (covers Prometheus + Grafana from the app list).
 - [ ] Loki + Grafana Alloy for logs (Promtail is deprecated).
 - [ ] Cilium NetworkPolicies and Pod Security Admission (`baseline`/`restricted` namespaces). Authentik is dropped for now (see section 4); revisit if local accounts get unwieldy.
-- [ ] Backups: Longhorn backup target and/or Velero. Test a restore.
+- [ ] **Backups: two points (offsite leg deferred).**
+  - Local: Longhorn recurring backups + Velero (cluster state) to a dedicated TrueNAS dataset over NFS (or S3 via MinIO). Fast restore path.
+  - Offsite: Duplicati to a cloud provider. What it backs up and where it uploads is not planned yet; revisit after everything else is settled. It does not point at TrueNAS.
+  - Git (GitHub) backs up manifests. The SOPS age key lives in the password manager. Duplicati's passphrase goes there too once it is set up.
+  - Media is treated as replaceable and covered by TrueNAS itself.
+  - Do a test restore of the local backups at least quarterly.
 
 ### Phase 5: Applications
 Roll out one category at a time, one PR each, in this order (lowest risk first):
-1. Administration (Glance, Gitea, Portainer, Duplicati; Netboot.xyz is hosted separately and Authentik is dropped)
+1. Administration (Glance, Gitea, Portainer, Duplicati, last, once its backup plan exists; Netboot.xyz is hosted separately and Authentik is dropped)
 2. Notetaking: nothing deployed here (Bookstack, Quartz and Perlite are dropped).
 3. Media (the *arr stack, Jellyseerr, Wizarr, Notifiarr, Tautulli if you use Plex). They share the TrueNAS media volume and need consistent UID/GID. The media server itself (Jellyfin/Plex) is on a dedicated box; Jellyseerr, Wizarr and Tautulli just point at it, so it needs to be reachable from the cluster.
 4. File management: nothing deployed here (Nextcloud, Immich, Syncthing and 0x0.st are dropped).
@@ -145,8 +150,7 @@ Because the hardware is spare-able, another option is to **wipe one M70q to be a
 
 ## 6. Open questions
 
-Decided: GitHub is the Git source of truth (Gitea in the cluster is just an app), L2 now with BGP deferred, and Longhorn plus TrueNAS NFS for storage.
+Decided: GitHub is the Git source of truth (Gitea in the cluster is just an app), L2 now with BGP deferred, Longhorn plus TrueNAS NFS for storage, Plex on the media box (so Tautulli stays), and only Jellyseerr and Wizarr go through the tunnel.
 
-- Is anything beyond Jellyseerr and Wizarr going through the tunnel?
-- Plex or Jellyfin on the media box? (Tautulli is only needed for Plex.)
-- Is Duplicati still needed given Longhorn/Velero backups to TrueNAS?
+- Which dataset or share on TrueNAS will hold the local Longhorn/Velero backups?
+- Duplicati: what to back up and where to (deferred until the rest is settled).
