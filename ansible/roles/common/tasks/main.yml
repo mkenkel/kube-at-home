@@ -6,6 +6,21 @@
     update_cache: true
     cache_valid_time: 3600
 
+# TLS and apt Release checks fail on a node whose clock is behind (seen on a fresh install).
+- name: Enable chrony
+  ansible.builtin.systemd:
+    name: chrony
+    enabled: true
+    state: started
+
+- name: Step the clock
+  ansible.builtin.command: chronyc -a makestep
+  changed_when: false
+
+- name: Wait for the clock to sync
+  ansible.builtin.command: chronyc waitsync 30 0.5
+  changed_when: false
+
 - name: Disable swap now
   ansible.builtin.command: swapoff -a
   when: ansible_facts['swaptotal_mb'] | int > 0

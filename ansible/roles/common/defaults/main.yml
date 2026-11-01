@@ -12,5 +12,6 @@ common_sysctls:
 common_packages:
   - apt-transport-https
   - ca-certificates
+  - chrony
   - curl
   - gpg
