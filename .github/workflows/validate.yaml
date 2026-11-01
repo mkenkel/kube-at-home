@@ -1,0 +1,96 @@
+name: validate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  KUBECONFORM_VERSION: v0.7.0
+  KUBERNETES_VERSION: 1.34.0
+  # Flux CRDs, then the datree catalog (Gateway API, Cilium, cert-manager, ...).
+  FLUX_SCHEMAS: https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/{{.ResourceKind}}{{.KindSuffix}}.json
+  CRD_SCHEMAS: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install --user yamllint
+      - name: Lint
+        run: yamllint --strict -c .yamllint.yaml .
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No age private keys
+        run: |
+          if git grep -nI -E 'AGE-SECRET-KEY-[A-Z0-9]+' -- . ':!.github/workflows/validate.yaml'; then
+            echo "::error::age private key found in the repo"
+            exit 1
+          fi
+      - name: No unencrypted Kubernetes Secrets
+        run: |
+          # A Secret document must carry a top-level `sops:` block.
+          fail=0
+          while IFS= read -r f; do
+            result=$(awk '
+              function flush() { if (secret && !sops) bad = 1; secret = 0; sops = 0 }
+              /^---/ { flush(); next }
+              /^kind:[ \t]*["'\'']?Secret["'\'']?[ \t]*$/ { secret = 1 }
+              /^sops:/ { sops = 1 }
+              END { flush(); print bad + 0 }
+            ' "$f")
+            if [ "$result" = "1" ]; then
+              echo "::error file=$f::Secret without a sops block (encrypt with SOPS/age before committing)"
+              fail=1
+            fi
+          done < <(git ls-files '*.yaml' '*.yml')
+          exit $fail
+
+  kubeconform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin kubeconform
+      - name: Build and validate kustomizations
+        run: |
+          fail=0
+          found=0
+          for root in clusters infrastructure apps; do
+            if [ ! -d "$root" ]; then
+              echo "skip: $root/ does not exist yet"
+              continue
+            fi
+            while IFS= read -r k; do
+              dir=$(dirname "$k")
+              found=1
+              echo "::group::kustomize build $dir"
+              if ! kubectl kustomize "$dir" > /tmp/out.yaml; then
+                echo "::error::kustomize build failed for $dir"
+                fail=1
+              elif ! kubeconform \
+                  -ignore-missing-schemas -summary \
+                  -kubernetes-version "$KUBERNETES_VERSION" \
+                  -schema-location default \
+                  -schema-location "$FLUX_SCHEMAS" \
+                  -schema-location "$CRD_SCHEMAS" \
+                  /tmp/out.yaml; then
+                echo "::error::kubeconform failed for $dir"
+                fail=1
+              fi
+              echo "::endgroup::"
+            done < <(find "$root" -name kustomization.yaml -not -path '*/node_modules/*' | sort)
+          done
+          if [ "$found" = 0 ]; then
+            echo "No kustomization.yaml found; nothing to validate yet."
+          fi
+          exit $fail
