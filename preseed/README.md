@@ -1,6 +1,6 @@
 # Debian preseed for kube nodes
 
-`preseed.cfg` drives an unattended minimal Debian install of kube-node-1..4
+`preseed.cfg` drives an unattended minimal Debian install of node-1..4
 (192.168.15.7-.10, see `knowledge/decisions/cluster-topology.md`).
 
 What it does:
@@ -11,7 +11,7 @@ What it does:
   No LVM and no swap (kubelet wants swap off; etcd sits on the NVMe root).
   The second bay, intended for Longhorn, is not touched.
 - No root login. User `ops` with a locked password, SSH key only, passwordless sudo (for Ansible).
-- Installs only `openssh-server`, `python3` and `sudo`. No tasks, no desktop. Ansible does the rest.
+- Installs only `openssh-server`, `python3`, `python3-debian` (needed by Ansible's `deb822_repository`) and `sudo`. No tasks, no desktop. Ansible does the rest.
 
 ## Before first use
 
@@ -61,5 +61,5 @@ Notes:
 ssh ops@192.168.15.7 'hostname; sudo -n true && echo sudo ok; lsblk'
 ```
 
-`hostname` must print `kube-node-1`, not `unassigned-hostname`. If it does, the DHCP mapping has no
+`hostname` must print `node-1`, not `unassigned-hostname`. If it does, the DHCP mapping has no
 hostname set (check OPNsense) and the node must be fixed with `hostnamectl set-hostname` or Ansible.
