@@ -1,4 +1,7 @@
 ---
+# rc 5 means the unit does not exist (multipath-tools is not installed on Debian by default).
 - name: Restart multipathd if present
   ansible.builtin.command: systemctl try-restart multipathd.service  # noqa: command-instead-of-module
-  changed_when: true
+  register: longhorn_prereqs_multipathd
+  changed_when: longhorn_prereqs_multipathd.rc == 0
+  failed_when: longhorn_prereqs_multipathd.rc not in [0, 5]
