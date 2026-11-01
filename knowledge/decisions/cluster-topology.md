@@ -17,10 +17,10 @@ sources:
 
 | Role | Host | IP |
 |---|---|---|
-| control plane | kube-node-1 | 192.168.15.7 |
-| control plane | kube-node-2 | 192.168.15.8 |
-| control plane | kube-node-3 | 192.168.15.9 |
-| worker | kube-node-4 | 192.168.15.10 |
+| control plane | node-1 | 192.168.15.7 |
+| control plane | node-2 | 192.168.15.8 |
+| control plane | node-3 | 192.168.15.9 |
+| worker | node-4 | 192.168.15.10 |
 | control-plane VIP (kube-vip, ARP) | none | 192.168.15.6 |
 | Cilium LoadBalancer pool (L2) | none | 192.168.15.100 - 192.168.15.200 |
 

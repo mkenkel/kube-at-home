@@ -17,7 +17,7 @@ Legend: **[repo]** an agent can do it by editing files; **[human]** needs hardwa
 - [ ] [repo] `preseed/` file: disk layout, user, SSH key, DHCP networking with the hostname taken from DHCP (no hardcoded hostname)
 - [ ] [human] Custom netboot.xyz menu entry pointing at the preseed URL (netboot.xyz is hosted outside the cluster)
 - [ ] [repo] `ansible/` playbook: `open-iscsi`/`iscsid`, `nfs-common`, multipath blacklist, containerd, kubeadm/kubelet/kubectl, kernel modules, sysctls
-- [x] DHCP static mappings for kube-node-1..4 exist (.7-.10); VIP .6 and LB pool .100-.200 chosen, see [topology](/decisions/cluster-topology.md)
+- [x] DHCP static mappings for node-1..4 exist (.7-.10; the OPNsense hostname is node-N, the description is kube-node-N); VIP .6 and LB pool .100-.200 chosen, see [topology](/decisions/cluster-topology.md)
 - [ ] [human] Click "Apply changes" on the OPNsense DHCP page so the reservations are live before the first netboot
 - [ ] [human] Generate the age key and store it in the password manager. Never commit it.
 
