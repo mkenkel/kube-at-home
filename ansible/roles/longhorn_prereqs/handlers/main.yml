@@ -1,0 +1,4 @@
+---
+- name: Restart multipathd if present
+  ansible.builtin.command: systemctl try-restart multipathd.service  # noqa: command-instead-of-module
+  changed_when: true

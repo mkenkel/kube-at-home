@@ -1,0 +1,25 @@
+---
+- name: Install open-iscsi and nfs-common
+  ansible.builtin.apt:
+    name: "{{ longhorn_prereqs_packages }}"
+    state: present
+
+- name: Enable and start iscsid
+  ansible.builtin.systemd:
+    name: iscsid
+    enabled: true
+    state: started
+
+# Without this multipathd grabs Longhorn's iSCSI block devices (see Longhorn KB).
+- name: Blacklist local disks from multipath
+  ansible.builtin.copy:
+    dest: /etc/multipath.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible. Keeps multipathd away from Longhorn volumes.
+      blacklist {
+          devnode "^sd[a-z0-9]+"
+      }
+  notify: Restart multipathd if present

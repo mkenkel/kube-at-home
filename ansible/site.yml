@@ -1,0 +1,9 @@
+---
+- name: Prepare Debian nodes for kubeadm
+  hosts: kube_nodes
+  become: true
+  roles:
+    - common
+    - longhorn_prereqs
+    - containerd
+    - kubernetes
