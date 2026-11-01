@@ -1,0 +1,31 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["flux", "helm-values", "github-actions"],
+  "flux": {
+    "managerFilePatterns": [
+      "/(^|/)clusters/.+\\.ya?ml$/",
+      "/(^|/)infrastructure/.+\\.ya?ml$/",
+      "/(^|/)apps/.+\\.ya?ml$/"
+    ]
+  },
+  "helm-values": {
+    "managerFilePatterns": [
+      "/(^|/)cilium/values\\.ya?ml$/",
+      "/(^|/)(infrastructure|apps)/.+/values\\.ya?ml$/"
+    ]
+  },
+  "pinDigests": false,
+  "packageRules": [
+    {
+      "description": "Group minor and patch updates into one PR",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "minor and patch updates"
+    },
+    {
+      "description": "Majors stay separate and are never grouped",
+      "matchUpdateTypes": ["major"],
+      "groupName": null
+    }
+  ]
+}
