@@ -12,11 +12,11 @@ GitOps repo for a home Kubernetes cluster: 4x Lenovo M70q Gen2 (Debian, kubeadm 
 | `cilium/values.yaml` | Cilium Helm values, installed by hand in Phase 1 |
 | `.sops.yaml` | SOPS + age rules for encrypted secrets |
 
-`ansible/` and `preseed/` (node provisioning) are added separately.
+`ansible/` and `preseed/` hold node provisioning (Debian preseed install, then Ansible node prep).
 
 ## Nodes
 
-192.168.15.0/24: kube-node-1..3 (control planes) at .7-.9, kube-node-4 (worker) at .10, API VIP .6, Cilium LB pool .100-.200.
+192.168.15.0/24: node-1..3 (control planes) at .7-.9, node-4 (worker) at .10, API VIP .6, Cilium LB pool .100-.200.
 
 ## Secrets
 
