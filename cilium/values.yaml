@@ -1,10 +1,14 @@
 # Cilium Helm values. Installed by hand in Phase 1 (after the Gateway API CRDs,
 # before Flux); not reconciled by Flux.
 #
-# TODO: pin the chart version here and in the install command once chosen,
-# e.g. `helm install cilium cilium/cilium --version <X.Y.Z> -n kube-system -f cilium/values.yaml`
-# Chart version: TODO (pin me)
-# Gateway API CRD version: TODO (pin me; must match what this Cilium release supports)
+# Chart version: 1.20.4 (checked 2026-11-01)
+# Gateway API CRD version: v1.6.3 (what the Cilium docs list as supported; v1.7.0 is newer, do not use it)
+#
+#   helm repo add cilium https://helm.cilium.io
+#   helm install cilium cilium/cilium --version 1.20.4 -n kube-system -f cilium/values.yaml
+#
+# Keep this file and `spec.values` in infrastructure/controllers/cilium/helmrelease.yaml identical,
+# otherwise Flux changes the release when it adopts it.
 
 # kube-proxy is skipped at kubeadm init (--skip-phases=addon/kube-proxy)
 kubeProxyReplacement: true
@@ -23,6 +27,13 @@ externalIPs:
 k8sClientRateLimit:
   qps: 10
   burst: 20
+
+# Pod CIDR must match networking.podSubnet in kubeadm/kubeadm-config.yaml
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - 10.244.0.0/16
 
 gatewayAPI:
   enabled: true

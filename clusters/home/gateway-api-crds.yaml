@@ -1,0 +1,27 @@
+# Flux takes over the Gateway API CRDs that were applied by hand in Phase 1.
+# Keep the tag equal to the version installed by hand and supported by the pinned Cilium.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: gateway-api
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://github.com/kubernetes-sigs/gateway-api
+  ref:
+    tag: v1.6.3
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gateway-api-crds
+  namespace: flux-system
+spec:
+  interval: 1h
+  sourceRef:
+    kind: GitRepository
+    name: gateway-api
+  path: ./config/crd/standard
+  prune: false
+  force: false
+  wait: true

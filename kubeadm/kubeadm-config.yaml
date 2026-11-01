@@ -1,0 +1,16 @@
+# Used by `kubeadm init --config` on node-1 (see README.md). Version matches ansible/group_vars/all.yml.
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: unix:///run/containerd/containerd.sock
+  # Control planes also run workloads (see knowledge/decisions/cluster-topology.md).
+  taints: []
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: v1.36.6
+# kube-vip VIP
+controlPlaneEndpoint: 192.168.15.6:6443
+networking:
+  podSubnet: 10.244.0.0/16
+  serviceSubnet: 10.96.0.0/12
