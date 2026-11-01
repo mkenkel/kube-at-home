@@ -25,6 +25,18 @@
     state: present
   register: kubernetes_repo
 
+# The repo can already exist while the package lists lack it (e.g. an earlier run failed
+# after adding it), so don't rely on the repo task having changed. Empty output = unknown package.
+- name: Check whether apt knows about kubelet
+  ansible.builtin.command: apt-cache policy kubelet
+  register: kubernetes_policy
+  changed_when: false
+
+- name: Refresh apt package lists
+  ansible.builtin.apt:
+    update_cache: true
+  when: kubernetes_repo is changed or kubernetes_policy.stdout | trim == ''
+
 - name: Unhold Kubernetes packages for an upgrade
   ansible.builtin.dpkg_selections:
     name: "{{ item }}"
@@ -36,7 +48,6 @@
   ansible.builtin.apt:
     name: "{{ kubernetes_packages | map('regex_replace', '$', '=' ~ kube_pkg_version) | list }}"
     state: present
-    update_cache: "{{ kubernetes_repo is changed }}"
     allow_downgrade: "{{ kube_upgrade | bool }}"
 
 - name: Hold Kubernetes packages
