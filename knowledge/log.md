@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Phase 1 prep)
+* **Update**: Prepared the Phase 1 repo files: `kubeadm/` config and runbook, pinned Cilium (1.20.4) and Gateway API (v1.6.3) versions, Flux Kustomizations and the Cilium `HelmRelease`. Nothing applied to the cluster. Details in [Phase 1](/phases/phase-1-bootstrap.md).
+
 ## 2026-11-01 (nodes prepped)
 * **Update**: Ran `site.yml` on node-1..4; the second run changed nothing. Fixed bad node clocks (chrony in the `common` role and preseed), the multipathd handler, and a stale apt-lists case in the `kubernetes` role. Ticked node install and Ansible in [Phase 0](/phases/phase-0-provisioning.md).
 
