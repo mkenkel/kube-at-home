@@ -21,13 +21,26 @@ Legend: **[repo]** an agent can do it by editing files; **[human]** needs hardwa
 - [ ] [human] Click "Apply changes" on the OPNsense DHCP page so the reservations are live before the first netboot
 - [ ] [human] Generate the age key and store it in the password manager. Never commit it.
 
-Still to do by hand before Phase 1:
+## Current state (2026-11-01)
 
-- [ ] [human] Put your real public SSH key in `preseed/preseed.cfg` (the install fails on purpose while the TODO placeholder is there)
-- [ ] [human] Replace the placeholder age recipient in `.sops.yaml` once the age key exists
-- [ ] [human] Pin the Cilium chart and Gateway API CRD versions (`cilium/values.yaml` TODOs)
-- [ ] [human] Run the Ansible playbook against the nodes after install: add host keys first (`host_key_checking` is on)
+Repo side is merged and committed: skeleton, preseed (real SSH key in, timezone America/Indianapolis, DHCP, hostname from DHCP), Ansible roles, CI, `preseed/custom.ipxe`. Hostnames are `node-1`..`node-4` (OPNsense hostname), not `kube-node-N`.
 
-Notes: the Kubernetes pin is 1.36.6-1.1 (checked 2026-11-01; latest minor then was 1.37). Ansible roles are our own, kept small; see `ansible/`. The preseed installs `python3-debian` because the `kubernetes` role uses `deb822_repository`.
+netboot.xyz runs in Docker on `dockery` (192.168.15.25), version 2.0.88, assets/nginx on port 8081, web app on 3000. The stock `menu.ipxe` has no menu item for a Menus-tab `custom.ipxe`; the only hook is `custom_url`, so `preseed/README.md` uses that.
+
+Remaining, in order:
+
+- [ ] [human] OPNsense DHCP page: click "Apply changes" so the `node-N` reservations are live
+- [ ] [human] Upload `preseed/preseed.cfg` to the netboot.xyz assets dir as `assets/preseed/preseed.cfg`
+- [ ] [human] Paste `preseed/custom.ipxe` into the web app Menus as `custom.ipxe`; add `set custom_url http://192.168.15.25:8081` to `boot.cfg` under `:global_vars`
+- [ ] [human] Verify: `curl -sI http://192.168.15.25:8081/custom.ipxe` and `.../preseed/preseed.cfg` both return 200 (assumes nginx serves menus and assets at the web root; unverified)
+- [ ] [human] Netboot node-1: "Custom URL Menu" appears, installer fetches the preseed, hostname is `node-1` (not `unassigned-hostname`), boots with no monitor. If it hangs headless, add `video=HDMI-A-1:e` to GRUB (check connector name in `/sys/class/drm/`). Also confirm the OS disk is `/dev/nvme0n1`; the install wipes it.
+- [ ] [human] Install node-2..4
+- [ ] [human] Add host keys, then `ansible-playbook site.yml` from `ansible/` (run twice; second run should change nothing)
+- [ ] [human] `age-keygen`, private key into the password manager, public recipient into `.sops.yaml`
+- [ ] [repo/human] Pin Cilium chart and Gateway API CRD versions in `cilium/values.yaml` (can wait until Phase 1)
+
+Unverified: `initrd=initrd.magic` on the kernel line, the "Return to Main Menu" `exit`, whether Debian's `containerd` package ships a default config (the role handles both), and the CI workflow (has not run yet).
+
+Notes: Kubernetes pin is 1.36.6-1.1 (checked 2026-11-01; latest minor then was 1.37). Ansible roles are our own and kept small. The preseed installs `python3-debian` for the `deb822_repository` module; `nfs-common` comes from Ansible, not the preseed.
 
 Next: [Phase 1](/phases/phase-1-bootstrap.md).
