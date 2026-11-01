@@ -1,0 +1,15 @@
+# Secrets: the SOPS age private key lives in the password manager, never here
+*.agekey
+keys.txt
+age.key
+
+# Kubeconfigs
+kubeconfig
+kubeconfig*
+*.kubeconfig
+admin.conf
+.kube/
+
+# Decrypted SOPS output
+*.dec.yaml
+*.decrypted

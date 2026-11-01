@@ -1,0 +1,8 @@
+# SOPS creation rules. Secrets are encrypted with age; Flux decrypts them in-cluster.
+# The private key is kept in the password manager and must never be committed.
+creation_rules:
+  - path_regex: (clusters|infrastructure|apps)/.*\.sops\.ya?ml$
+    encrypted_regex: ^(data|stringData)$
+    # TODO(human): replace with the real public key from `age-keygen` (Phase 0).
+    # The value below is a placeholder and will not encrypt anything usable.
+    age: age1TODOreplacewithrealpublickeyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
