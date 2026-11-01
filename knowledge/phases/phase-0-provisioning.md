@@ -34,10 +34,12 @@ Remaining, in order:
 - [ ] [human] Paste `preseed/custom.ipxe` into the web app Menus as `custom.ipxe`; add `set custom_url http://192.168.15.25:8081` to `boot.cfg` under `:global_vars`
 - [ ] [human] Verify: `curl -sI http://192.168.15.25:8081/custom.ipxe` and `.../preseed/preseed.cfg` both return 200 (assumes nginx serves menus and assets at the web root; unverified)
 - [ ] [human] Netboot node-1: "Custom URL Menu" appears, installer fetches the preseed, hostname is `node-1` (not `unassigned-hostname`), boots with no monitor. If it hangs headless, add `video=HDMI-A-1:e` to GRUB (check connector name in `/sys/class/drm/`). Also confirm the OS disk is `/dev/nvme0n1`; the install wipes it.
-- [ ] [human] Install node-2..4
-- [ ] [human] Add host keys, then `ansible-playbook site.yml` from `ansible/` (run twice; second run should change nothing)
+- [x] [human] Install node-2..4
+- [x] [human] Add host keys, then `ansible-playbook site.yml` from `ansible/` (run twice; second run should change nothing). Verified 2026-11-01: second run `changed=0` on all four nodes.
 - [ ] [human] `age-keygen`, private key into the password manager, public recipient into `.sops.yaml`
 - [ ] [repo/human] Pin Cilium chart and Gateway API CRD versions in `cilium/values.yaml` (can wait until Phase 1)
+
+Found during the first Ansible run: node RTCs can be wrong (node-2 months behind, node-3 4h behind), which breaks TLS and apt. The `common` role now runs chrony and steps the clock first; a rerun after a failed run also refreshes apt lists when `kubelet` has no candidate. The multipathd restart handler tolerates a missing unit.
 
 Unverified: `initrd=initrd.magic` on the kernel line, the "Return to Main Menu" `exit`, whether Debian's `containerd` package ships a default config (the role handles both), and the CI workflow (has not run yet).
 
