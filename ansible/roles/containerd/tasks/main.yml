@@ -5,10 +5,16 @@
     state: present
 
 - name: Check for an existing containerd config
+  ansible.builtin.stat:
+    path: /etc/containerd/config.toml
+  register: containerd_config
+
+- name: Check whether the config already sets the cgroup driver
   ansible.builtin.command: grep -q SystemdCgroup /etc/containerd/config.toml
   register: containerd_config_check
   changed_when: false
-  failed_when: containerd_config_check.rc > 1
+  failed_when: false
+  when: containerd_config.stat.exists
 
 - name: Generate default containerd config
   ansible.builtin.shell: |
@@ -17,7 +23,7 @@
     containerd config default > /etc/containerd/config.toml
   args:
     executable: /bin/bash
-  when: containerd_config_check.rc != 0
+  when: not containerd_config.stat.exists or containerd_config_check.rc != 0
   changed_when: true
 
 - name: Use the systemd cgroup driver

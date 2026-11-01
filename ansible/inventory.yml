@@ -3,15 +3,15 @@ all:
   children:
     control_plane:
       hosts:
-        kube-node-1:
+        node-1:
           ansible_host: 192.168.15.7
-        kube-node-2:
+        node-2:
           ansible_host: 192.168.15.8
-        kube-node-3:
+        node-3:
           ansible_host: 192.168.15.9
     workers:
       hosts:
-        kube-node-4:
+        node-4:
           ansible_host: 192.168.15.10
     kube_nodes:
       children:
