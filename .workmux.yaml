@@ -1,0 +1,8 @@
+# One worktree per task, e.g. `workmux add phase-0-ansible`.
+# Only repo-side work is parallelised; anything touching the real cluster stays in the main checkout.
+agent: claude
+panes:
+  - command: <agent>
+    focus: true
+  - split: horizontal
+    size: 15
