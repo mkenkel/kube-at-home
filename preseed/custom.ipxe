@@ -1,0 +1,43 @@
+#!ipxe
+# netboot.xyz web app -> Menus -> custom.ipxe (served by the container at http://192.168.15.25:8081/custom.ipxe).
+# Shown in the main menu as "Custom URL Menu" once boot.cfg has: set custom_url http://192.168.15.25:8081
+# Preseed is served from assets/preseed/preseed.cfg
+
+:custom_menu
+menu Custom Boot Options
+item --gap -- Kubernetes nodes:
+item debian_kube Debian trixie: kube node (preseed, wipes /dev/nvme0n1)
+item --gap -- Return:
+item return Return to Main Menu
+choose --default debian_kube --timeout 30000 custom_target && goto ${custom_target}
+
+:debian_kube
+# LAN IP of the host running the netboot.xyz container (not localhost)
+set preseed_host 192.168.15.25
+set preseed_url http://${preseed_host}:8081/preseed/preseed.cfg
+
+set os Debian
+set os_arch ${arch}
+iseq ${os_arch} x86_64 && set os_arch amd64 ||
+iseq ${os_arch} arm64 && set os_arch arm64 ||
+set debian_version trixie
+
+set mirrorcfg mirror/suite=${debian_version}
+set dir ${debian_base_dir}/dists/${debian_version}/main/installer-${os_arch}/current/images/netboot/debian-installer/${os_arch}
+set install_params auto=true priority=critical preseed/url=${preseed_url} netcfg/get_hostname=unassigned-hostname netcfg/get_domain=unassigned-domain
+
+imgfree
+kernel ${debian_mirror}/${dir}/linux ${install_params} ${netcfg} ${mirrorcfg} initrd=initrd.magic ${cmdline}
+initrd ${debian_mirror}/${dir}/initrd.gz
+echo
+echo MD5sums:
+md5sum linux initrd.gz
+boot || goto failed
+
+:failed
+echo Boot failed, check the mirror and preseed URL: ${preseed_url}
+prompt Press any key to return
+goto custom_menu
+
+:return
+exit
