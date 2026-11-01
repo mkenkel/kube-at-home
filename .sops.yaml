@@ -3,6 +3,5 @@
 creation_rules:
   - path_regex: (clusters|infrastructure|apps)/.*\.sops\.ya?ml$
     encrypted_regex: ^(data|stringData)$
-    # TODO(human): replace with the real public key from `age-keygen` (Phase 0).
-    # The value below is a placeholder and will not encrypt anything usable.
-    age: age1TODOreplacewithrealpublickeyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    # Public recipient only. The private key is in the password manager.
+    age: age1cf0ee6n2c55zyzhgdngzrw3xu86mu9mdae28mdha4kzr9x2h8g2qnwputp
