@@ -1,0 +1,35 @@
+# Cilium Helm values. Installed by hand in Phase 1 (after the Gateway API CRDs,
+# before Flux); not reconciled by Flux.
+#
+# TODO: pin the chart version here and in the install command once chosen,
+# e.g. `helm install cilium cilium/cilium --version <X.Y.Z> -n kube-system -f cilium/values.yaml`
+# Chart version: TODO (pin me)
+# Gateway API CRD version: TODO (pin me; must match what this Cilium release supports)
+
+# kube-proxy is skipped at kubeadm init (--skip-phases=addon/kube-proxy)
+kubeProxyReplacement: true
+
+# kube-vip VIP for the API server (kube-node-1..3 control planes)
+k8sServiceHost: 192.168.15.6
+k8sServicePort: 6443
+
+# LoadBalancer IPs announced over ARP (pool 192.168.15.100-200 is a
+# CiliumLoadBalancerIPPool + CiliumL2AnnouncementPolicy, applied via Flux)
+l2announcements:
+  enabled: true
+externalIPs:
+  enabled: true
+# L2 announcements use leases; raise the client rate limit so they don't throttle
+k8sClientRateLimit:
+  qps: 10
+  burst: 20
+
+gatewayAPI:
+  enabled: true
+
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
