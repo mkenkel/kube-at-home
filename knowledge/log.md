@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (cluster is up)
+* **Update**: Ran `ansible/cluster.yml`; node-1..4 are Ready on v1.36.6 with Cilium. Ticked the kubeadm, CRD and Cilium items in [Phase 1](/phases/phase-1-bootstrap.md). Flux bootstrap and the SOPS secret remain.
+
 ## 2026-11-01 (Phase 1 automation)
 * **Update**: Added `ansible/cluster.yml` and the `control_plane`, `worker` and `cni` roles to automate kube-vip, kubeadm init/join, Gateway API CRDs and Cilium (Helm pinned to 3.x). Written and linted only; not run against the cluster. Flux bootstrap stays manual.
 

@@ -12,7 +12,7 @@ Versions: Kubernetes v1.36.6, Cilium chart 1.20.4, Gateway API v1.6.3, kube-vip 
 
 Re-running skips steps already done (node-1 and the joins are detected by `/etc/kubernetes/kubelet.conf`).
 
-Unverified: `--skip-phases`/`--upload-certs` together with `--config` (the playbook is not tested; if kubeadm refuses, move `skipPhases` into `InitConfiguration`); the kube-vip `super-admin.conf` workaround on this version; that the last line of `kubeadm init phase upload-certs` is the certificate key. Use `ansible-playbook cluster.yml --check` only for syntax-level sanity, since most tasks are `command`.
+First run (2026-11-01) worked: all four nodes Ready. Not yet checked: whether the taints were removed and the Gateway API CRDs/Cilium settings are as expected (`kubectl get nodes -o wide`, `cilium status`).
 
 ## 5. Push the repo
 
