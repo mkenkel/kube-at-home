@@ -5,3 +5,6 @@ resources:
   - grafana-admin.sops.yaml
   - helmrepository.yaml
   - helmrelease.yaml
+  - helmrepositories-logging.yaml
+  - loki.yaml
+  - alloy.yaml

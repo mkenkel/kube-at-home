@@ -59,3 +59,8 @@ spec:
       grafana.ini:
         server:
           root_url: https://grafana.home.mkenkel.com
+      additionalDataSources:
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki.monitoring.svc.cluster.local:3100
