@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (CNI path fix)
+* **Update**: coredns and Hubble were stuck because containerd looked for CNI plugins in `/usr/lib/cni` and Cilium installs to `/opt/cni/bin`. Fixed in the `containerd` role; `kube-system` is all Running. See [Phase 1](/phases/phase-1-bootstrap.md).
+
 ## 2026-11-01 (cluster is up)
 * **Update**: Ran `ansible/cluster.yml`; node-1..4 are Ready on v1.36.6 with Cilium. Ticked the kubeadm, CRD and Cilium items in [Phase 1](/phases/phase-1-bootstrap.md). Flux bootstrap and the SOPS secret remain.
 

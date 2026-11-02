@@ -30,4 +30,6 @@ Flux-side files: `clusters/home/{gateway-api-crds,infrastructure,apps}.yaml` and
 
 Confirmed by the first run: kubeadm accepted `--skip-phases` and `--upload-certs` with `--config`, the certificate key and joins worked, and nodes joined through the VIP. Still unverified: that the HelmRelease adopts the hand-installed release with no diff; the flux-system `GitRepository`/bootstrap flow, since nothing has run against the cluster.
 
+Found on the first run: containerd's default config looks for CNI plugins in `/usr/lib/cni`, while Cilium installs `cilium-cni` to `/opt/cni/bin`, so coredns and Hubble sat in `ContainerCreating` ("failed to find plugin cilium-cni"). The `containerd` Ansible role now sets `bin_dir = "/opt/cni/bin"`; after re-running it all `kube-system` pods were Running (2026-11-01).
+
 Decisions: [GitOps](/decisions/gitops-flux.md), [topology](/decisions/cluster-topology.md), [networking](/decisions/networking.md).
