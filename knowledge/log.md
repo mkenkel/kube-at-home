@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Longhorn metrics)
+* **Update**: Added a Longhorn `ServiceMonitor` in `infrastructure/configs/monitoring/`. It is defined there instead of through the chart value so it applies after the monitoring CRDs exist. Not yet pushed. See [Phase 4](/phases/phase-4-observability-security.md).
+
 ## 2026-11-01 (control-plane metrics)
 * **Update**: Wrote `ansible/control-plane-metrics.yml` to expose etcd, scheduler and controller-manager metrics, added the matching `extraArgs` to `kubeadm/kubeadm-config.yaml` and enabled their scrapes in the Prometheus HelmRelease. Run on node-1..3 without failures and verified reachable over the node IPs; pushed, and Prometheus shows all control-plane targets up. The stored `kubeadm-config` ConfigMap has the new args. See [Phase 4](/phases/phase-4-observability-security.md).
 

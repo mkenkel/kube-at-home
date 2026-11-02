@@ -1,0 +1,16 @@
+# Longhorn manager metrics (volume health, replica and disk usage). Defined here rather than through
+# the chart's metrics.serviceMonitor so it applies after the monitoring CRDs exist.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+spec:
+  selector:
+    matchLabels:
+      app: longhorn-manager
+  namespaceSelector:
+    matchNames:
+      - longhorn-system
+  endpoints:
+    - port: manager
