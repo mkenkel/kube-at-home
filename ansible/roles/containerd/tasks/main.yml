@@ -33,6 +33,15 @@
     replace: '\1SystemdCgroup = true'
   notify: Restart containerd
 
+# Cilium (and most CNIs) install their plugin binaries to /opt/cni/bin, but containerd's
+# default config looks in /usr/lib/cni, so pods fail with "failed to find plugin cilium-cni".
+- name: Look for CNI plugins in /opt/cni/bin
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    regexp: '^(\s*bin_dir\s*=\s*)"/usr/lib/cni"\s*$'
+    replace: '\1"/opt/cni/bin"'
+  notify: Restart containerd
+
 - name: Enable and start containerd
   ansible.builtin.systemd:
     name: containerd
