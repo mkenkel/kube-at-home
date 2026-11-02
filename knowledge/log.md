@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (logging live)
+* **Update**: Loki and Alloy are running and pod logs from five namespaces are queryable in Loki. First finding: steady kube-apiserver gRPC dial-cancel warnings to local etcd, probably benign. See [Phase 4](/phases/phase-4-observability-security.md).
+
 ## 2026-11-01 (logging)
 * **Update**: Added Loki and Grafana Alloy HelmReleases plus a Grafana Loki datasource. Used the `grafana-community` Loki chart because the OSS chart moved there. Rendering the chart locally caught that the simple-scalable replicas must be zeroed. Not yet pushed or applied. See [Phase 4](/phases/phase-4-observability-security.md).
 
