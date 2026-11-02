@@ -17,7 +17,7 @@ Items tagged **[ansible]** are run by `ansible/cluster.yml`. Order matters: node
 - [x] [ansible] `kubeadm init --skip-phases=addon/kube-proxy --control-plane-endpoint=<VIP>:6443 --upload-certs`; join 2 control planes and the worker
 - [x] [ansible] Install pinned Gateway API CRDs by hand
 - [x] [ansible] `helm install` Cilium from `cilium/values.yaml` (kube-proxy replacement, `k8sServiceHost`/`Port`, L2 announcements, Gateway API)
-- [ ] [human] `flux bootstrap github`, then create the SOPS age secret in-cluster
+- [x] [human] `flux bootstrap github`, then create the SOPS age secret in-cluster (done 2026-11-01)
 - [x] [repo] Cilium `HelmRelease` with identical release name, namespace and values so Flux adopts it; Flux-owned Gateway API CRDs
 - [x] [repo] Renovate config (`renovate.json`)
 - [ ] [repo] CI on PRs: `kustomize build` and `kubeconform` exist in `.github/workflows/validate.yaml`; `flux diff` needs cluster access and is not set up
@@ -31,5 +31,7 @@ Flux-side files: `clusters/home/{gateway-api-crds,infrastructure,apps}.yaml` and
 Confirmed by the first run: kubeadm accepted `--skip-phases` and `--upload-certs` with `--config`, the certificate key and joins worked, and nodes joined through the VIP. Still unverified: that the HelmRelease adopts the hand-installed release with no diff; the flux-system `GitRepository`/bootstrap flow, since nothing has run against the cluster.
 
 Found on the first run: containerd's default config looks for CNI plugins in `/usr/lib/cni`, while Cilium installs `cilium-cni` to `/opt/cni/bin`, so coredns and Hubble sat in `ContainerCreating` ("failed to find plugin cilium-cni"). The `containerd` Ansible role now sets `bin_dir = "/opt/cni/bin"`; after re-running it all `kube-system` pods were Running (2026-11-01).
+
+Flux bootstrapped 2026-11-01 (commit `cb91ac10`, `clusters/home/flux-system/`). `gateway-api-crds` and `infrastructure-controllers` applied, and the Cilium `HelmRelease` took over the hand install: "Helm upgrade succeeded for release kube-system/cilium.v2 with chart cilium@1.20.4". Flux ran an upgrade (revision 2) rather than a no-op; not yet checked whether any values changed (`helm history cilium -n kube-system`, or compare `helm get values`).
 
 Decisions: [GitOps](/decisions/gitops-flux.md), [topology](/decisions/cluster-topology.md), [networking](/decisions/networking.md).

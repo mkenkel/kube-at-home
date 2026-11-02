@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Flux is live)
+* **Update**: Bootstrapped Flux and created the `sops-age` secret. Flux owns the Gateway API CRDs and adopted the hand-installed Cilium (HelmRelease Ready at 1.20.4, release revision 2). See [Phase 1](/phases/phase-1-bootstrap.md).
+
 ## 2026-11-01 (CNI path fix)
 * **Update**: coredns and Hubble were stuck because containerd looked for CNI plugins in `/usr/lib/cni` and Cilium installs to `/opt/cni/bin`. Fixed in the `containerd` role; `kube-system` is all Running. See [Phase 1](/phases/phase-1-bootstrap.md).
 
