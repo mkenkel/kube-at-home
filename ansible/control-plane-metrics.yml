@@ -1,0 +1,9 @@
+---
+# Make etcd, kube-scheduler and kube-controller-manager metrics reachable by Prometheus.
+# kubeadm binds them to 127.0.0.1. Edits the static pod manifests in place, one control plane at a
+# time so etcd keeps its quorum. Re-runnable. See knowledge/phases/phase-4-observability-security.md.
+- name: Expose control-plane metrics
+  hosts: control_plane
+  serial: 1
+  roles:
+    - control_plane_metrics

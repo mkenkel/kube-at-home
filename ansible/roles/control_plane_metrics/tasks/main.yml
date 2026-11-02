@@ -1,0 +1,77 @@
+---
+# Keeps the cluster's stored ClusterConfiguration in step with the edited manifests; otherwise a
+# later `kubeadm upgrade` regenerates the manifests and undoes this.
+- name: Copy the kubeadm config
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../kubeadm/kubeadm-config.yaml"
+    dest: /root/kubeadm-config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  register: control_plane_metrics_config
+  when: inventory_hostname == groups['control_plane'][0]
+
+- name: Upload the config to the kubeadm-config ConfigMap
+  ansible.builtin.command: kubeadm init phase upload-config kubeadm --config /root/kubeadm-config.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  when:
+    - inventory_hostname == groups['control_plane'][0]
+    - control_plane_metrics_config is changed
+  changed_when: true
+
+- name: Listen for etcd metrics on all addresses
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/etcd.yaml
+    regexp: '--listen-metrics-urls=http://127\.0\.0\.1:2381'
+    replace: '--listen-metrics-urls=http://0.0.0.0:2381'
+  register: control_plane_metrics_etcd
+
+- name: Bind kube-controller-manager to all addresses
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    regexp: '--bind-address=127\.0\.0\.1'
+    replace: '--bind-address=0.0.0.0'
+  register: control_plane_metrics_cm
+
+- name: Bind kube-scheduler to all addresses
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-scheduler.yaml
+    regexp: '--bind-address=127\.0\.0\.1'
+    replace: '--bind-address=0.0.0.0'
+  register: control_plane_metrics_scheduler
+
+# kubelet restarts a static pod when its manifest changes; wait for the new listener before moving on.
+- name: Wait for etcd to listen on all addresses
+  ansible.builtin.command: ss -ltnH 'sport = :2381'
+  register: control_plane_metrics_etcd_ss
+  until: control_plane_metrics_etcd_ss.stdout is search('(0\.0\.0\.0|\*|\[::\]):2381')
+  retries: 36
+  delay: 5
+  changed_when: false
+
+- name: Wait for kube-controller-manager to listen on all addresses
+  ansible.builtin.command: ss -ltnH 'sport = :10257'
+  register: control_plane_metrics_cm_ss
+  until: control_plane_metrics_cm_ss.stdout is search('(0\.0\.0\.0|\*|\[::\]):10257')
+  retries: 36
+  delay: 5
+  changed_when: false
+
+- name: Wait for kube-scheduler to listen on all addresses
+  ansible.builtin.command: ss -ltnH 'sport = :10259'
+  register: control_plane_metrics_scheduler_ss
+  until: control_plane_metrics_scheduler_ss.stdout is search('(0\.0\.0\.0|\*|\[::\]):10259')
+  retries: 36
+  delay: 5
+  changed_when: false
+
+- name: Wait for the control-plane pods on this node to be Ready
+  ansible.builtin.command: >-
+    kubectl wait --for=condition=Ready --timeout=180s -n kube-system
+    pod/etcd-{{ inventory_hostname }}
+    pod/kube-controller-manager-{{ inventory_hostname }}
+    pod/kube-scheduler-{{ inventory_hostname }}
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false

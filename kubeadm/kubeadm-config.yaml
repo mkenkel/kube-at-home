@@ -14,3 +14,19 @@ controlPlaneEndpoint: 192.168.15.6:6443
 networking:
   podSubnet: 10.244.0.0/16
   serviceSubnet: 10.96.0.0/12
+# Metrics for Prometheus (kube-prometheus-stack scrapes them over the node IP). Unauthenticated on
+# the LAN for etcd (plain HTTP :2381); the other two require a bearer token. Applied to the live
+# cluster by ansible/control-plane-metrics.yml.
+etcd:
+  local:
+    extraArgs:
+      - name: listen-metrics-urls
+        value: http://0.0.0.0:2381
+controllerManager:
+  extraArgs:
+    - name: bind-address
+      value: 0.0.0.0
+scheduler:
+  extraArgs:
+    - name: bind-address
+      value: 0.0.0.0

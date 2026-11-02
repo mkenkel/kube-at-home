@@ -27,16 +27,9 @@ spec:
     remediation:
       retries: 3
   values:
-    # kubeadm binds these to 127.0.0.1, so their targets would sit permanently down.
-    # TODO: expose their metrics (kubeadm extraArgs) and enable them; etcd matters most here
-    # because it shares its disk with Longhorn. There is no kube-proxy (Cilium replaces it).
+    # No kube-proxy: Cilium replaces it. etcd, scheduler and controller-manager are scraped over the
+    # node IPs; ansible/control-plane-metrics.yml makes them listen on 0.0.0.0 (kubeadm default is 127.0.0.1).
     kubeProxy:
-      enabled: false
-    kubeEtcd:
-      enabled: false
-    kubeScheduler:
-      enabled: false
-    kubeControllerManager:
       enabled: false
     prometheus:
       prometheusSpec:
