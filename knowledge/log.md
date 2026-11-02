@@ -1,7 +1,7 @@
 # Update Log
 
 ## 2026-11-01 (control-plane metrics)
-* **Update**: Wrote `ansible/control-plane-metrics.yml` to expose etcd, scheduler and controller-manager metrics, added the matching `extraArgs` to `kubeadm/kubeadm-config.yaml` and enabled their scrapes in the Prometheus HelmRelease. Not yet run or pushed. See [Phase 4](/phases/phase-4-observability-security.md).
+* **Update**: Wrote `ansible/control-plane-metrics.yml` to expose etcd, scheduler and controller-manager metrics, added the matching `extraArgs` to `kubeadm/kubeadm-config.yaml` and enabled their scrapes in the Prometheus HelmRelease. Run on node-1..3 without failures and verified reachable over the node IPs; the HelmRelease change is not yet pushed. See [Phase 4](/phases/phase-4-observability-security.md).
 
 ## 2026-11-01 (monitoring live)
 * **Update**: Flux applied `kube-prometheus-stack`; Prometheus and Grafana run on Longhorn and Grafana answers at `grafana.home.mkenkel.com` through the Gateway with a verified production Let's Encrypt wildcard cert. All five Flux Kustomizations are Ready. Ticked the applied items in [Phase 2](/phases/phase-2-networking.md) and [Phase 4](/phases/phase-4-observability-security.md).
