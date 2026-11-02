@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Phase 2 live)
+* **Update**: Flux applied the L2 pool, Gateway (Programmed at 192.168.15.100), cert-manager and both issuers; the staging wildcard certificate issued cleanly, so the Certificate now uses `letsencrypt-prod`. See [Phase 2](/phases/phase-2-networking.md).
+
 ## 2026-11-01 (issuers)
 * **Update**: Added the Let's Encrypt staging and prod ClusterIssuers, the `*.home.mkenkel.com` Certificate (staging) and the HTTPS Gateway listener. Not yet pushed or applied. See [Phase 2](/phases/phase-2-networking.md).
 

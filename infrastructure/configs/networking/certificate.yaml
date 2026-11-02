@@ -9,6 +9,6 @@ spec:
   secretName: home-wildcard-tls
   issuerRef:
     kind: ClusterIssuer
-    name: letsencrypt-staging
+    name: letsencrypt-prod
   dnsNames:
     - "*.home.mkenkel.com"
