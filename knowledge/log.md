@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Longhorn live)
+* **Update**: Flux installed Longhorn v1.13.0; the HelmRelease is Ready and all pods in `longhorn-system` are Running. Default StorageClass is `longhorn`. Provisioning has not been tested with a PVC yet. The Cilium release stayed at revision 4, so there is no repeated-upgrade loop. See [Phase 3](/phases/phase-3-storage.md).
+
 ## 2026-11-01 (Phase 3 start)
 * **Update**: Nodes have one 1TB NVMe each (no second disk), so Longhorn uses the root filesystem with reserve limits; recorded in [Storage](/decisions/storage.md). Added the Longhorn v1.13.0 `HelmRelease`; not yet pushed or applied. NFS media volume waits for the TrueNAS details.
 

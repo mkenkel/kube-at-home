@@ -11,7 +11,7 @@ sources:
     title: Deployment plan, Phase 3
 ---
 
-- [ ] [repo] Prepared, not yet applied: Longhorn v1.13.0 `HelmRelease` (default `StorageClass`, 3 replicas, disk-usage limits for the single-NVMe layout; needs Kubernetes >= 1.34)
+- [x] [repo] Applied 2026-11-01 (HelmRelease Ready, all pods Running; a test PVC has not been run yet): Longhorn v1.13.0 `HelmRelease` (default `StorageClass`, 3 replicas, disk-usage limits for the single-NVMe layout; needs Kubernetes >= 1.34)
 - [ ] [human] TrueNAS NFS export for media with the agreed UID/GID
 - [ ] [repo] NFS `PersistentVolume`/`PersistentVolumeClaim` for the media volume
 - [x] Node prerequisites checked 2026-11-01 on all four nodes: `iscsid` active, `iscsi_tcp` loaded, `open-iscsi` and `nfs-common` installed, `multipathd` inactive, `findmnt`/`blkid`/`lsblk`/`curl` present, root disk 916G with ~865G free. `longhornctl check preflight` was not run.
