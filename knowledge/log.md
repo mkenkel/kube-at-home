@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (monitoring live)
+* **Update**: Flux applied `kube-prometheus-stack`; Prometheus and Grafana run on Longhorn and Grafana answers at `grafana.home.mkenkel.com` through the Gateway with a verified production Let's Encrypt wildcard cert. All five Flux Kustomizations are Ready. Ticked the applied items in [Phase 2](/phases/phase-2-networking.md) and [Phase 4](/phases/phase-4-observability-security.md).
+
 ## 2026-11-01 (Phase 4 start)
 * **Update**: Added `kube-prometheus-stack` 92.17.0 (HelmRelease, SOPS-encrypted Grafana admin secret, Grafana HTTPRoute). Not yet pushed or applied. etcd, scheduler and controller-manager scrapes are disabled until their metrics are exposed. See [Phase 4](/phases/phase-4-observability-security.md).
 
