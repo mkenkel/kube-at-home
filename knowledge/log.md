@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Phase 3 start)
+* **Update**: Nodes have one 1TB NVMe each (no second disk), so Longhorn uses the root filesystem with reserve limits; recorded in [Storage](/decisions/storage.md). Added the Longhorn v1.13.0 `HelmRelease`; not yet pushed or applied. NFS media volume waits for the TrueNAS details.
+
 ## 2026-11-01 (Phase 2 live)
 * **Update**: Flux applied the L2 pool, Gateway (Programmed at 192.168.15.100), cert-manager and both issuers; the staging wildcard certificate issued cleanly, so the Certificate now uses `letsencrypt-prod`. See [Phase 2](/phases/phase-2-networking.md).
 

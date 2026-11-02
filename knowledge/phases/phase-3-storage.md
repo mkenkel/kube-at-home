@@ -11,9 +11,9 @@ sources:
     title: Deployment plan, Phase 3
 ---
 
-- [ ] [repo] Longhorn `HelmRelease`, default `StorageClass`, replica count suited to 4 nodes
+- [ ] [repo] Prepared, not yet applied: Longhorn v1.13.0 `HelmRelease` (default `StorageClass`, 3 replicas, disk-usage limits for the single-NVMe layout; needs Kubernetes >= 1.34)
 - [ ] [human] TrueNAS NFS export for media with the agreed UID/GID
 - [ ] [repo] NFS `PersistentVolume`/`PersistentVolumeClaim` for the media volume
-- [ ] [human] Verify node prerequisites from Ansible (iscsid, multipath blacklist) before installing Longhorn
+- [ ] [human] Verify node prerequisites from Ansible (iscsid, multipath blacklist) before installing Longhorn, e.g. `longhornctl check preflight` (not run yet)
 
 Decision: [storage](/decisions/storage.md).
