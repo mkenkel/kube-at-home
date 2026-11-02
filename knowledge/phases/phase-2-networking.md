@@ -13,9 +13,9 @@ sources:
 
 All of this is [repo] work applied by Flux after [Phase 1](/phases/phase-1-bootstrap.md).
 
-- [ ] `CiliumL2AnnouncementPolicy` and `CiliumLoadBalancerIPPool` (range from Phase 0)
-- [ ] Gateway + GatewayClass (Cilium Envoy)
-- [ ] cert-manager and a DNS-01 `ClusterIssuer`; needs a DNS provider API credential (SOPS-encrypted) from the user
-- [ ] Hubble enabled
+- [ ] Prepared 2026-11-01, not yet applied: `CiliumL2AnnouncementPolicy` and `CiliumLoadBalancerIPPool` (range from Phase 0)
+- [ ] Prepared, HTTP only: Gateway `gateway/home` at 192.168.15.100 (GatewayClass `cilium` comes from the Cilium chart); HTTPS listener waits for the domain and cert-manager
+- [ ] cert-manager and a DNS-01 `ClusterIssuer` for Cloudflare; needs the domain and a Cloudflare API token (SOPS-encrypted) from the user
+- [x] Hubble enabled (in `cilium/values.yaml`; pods Running)
 - [ ] external-dns (optional)
 - [ ] BGP: deferred, see [networking](/decisions/networking.md)

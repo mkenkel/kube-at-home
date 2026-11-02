@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Phase 2 start)
+* **Update**: Added `infrastructure/configs/networking/` with the L2 pool (.100-.200), L2 announcement policy and an HTTP-only Gateway at .100. Not yet pushed or applied. DNS provider is Cloudflare; domain still to be chosen. See [Phase 2](/phases/phase-2-networking.md).
+
 ## 2026-11-01 (Flux is live)
 * **Update**: Bootstrapped Flux and created the `sops-age` secret. Flux owns the Gateway API CRDs and adopted the hand-installed Cilium (HelmRelease Ready at 1.20.4, release revision 2). See [Phase 1](/phases/phase-1-bootstrap.md).
 
