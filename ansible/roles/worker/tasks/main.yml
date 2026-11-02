@@ -1,0 +1,20 @@
+---
+- name: Check for an existing join
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: worker_kubelet_conf
+
+- name: Create a bootstrap token and print the join command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: worker_join_command
+  changed_when: true
+  when: not worker_kubelet_conf.stat.exists
+
+- name: Join as a worker
+  ansible.builtin.command: "{{ worker_join_command.stdout | trim }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
+  when: not worker_kubelet_conf.stat.exists

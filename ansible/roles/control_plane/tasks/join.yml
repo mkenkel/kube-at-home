@@ -1,0 +1,42 @@
+---
+# Needs the first control plane to be initialised in the same run (see cluster.yml).
+- name: Create a bootstrap token and print the join command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+  register: control_plane_join_command
+  changed_when: true
+
+- name: Upload control-plane certificates and get the key
+  ansible.builtin.command: kubeadm init phase upload-certs --upload-certs
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  run_once: true
+  register: control_plane_upload_certs
+  changed_when: true
+
+- name: Read the kube-vip manifest from the first control plane
+  ansible.builtin.slurp:
+    src: /etc/kubernetes/manifests/kube-vip.yaml
+  delegate_to: "{{ groups['control_plane'][0] }}"
+  register: control_plane_kube_vip_manifest
+
+- name: Pull the kube-vip image
+  ansible.builtin.command: "ctr image pull ghcr.io/kube-vip/kube-vip:{{ kube_vip_version }}"
+  changed_when: false
+
+- name: Write the kube-vip manifest
+  ansible.builtin.copy:
+    content: "{{ control_plane_kube_vip_manifest.content | b64decode }}"
+    dest: /etc/kubernetes/manifests/kube-vip.yaml
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Join as a control plane
+  ansible.builtin.command: >-
+    {{ control_plane_join_command.stdout | trim }}
+    --control-plane --certificate-key {{ control_plane_upload_certs.stdout_lines[-1] }}
+  args:
+    creates: /etc/kubernetes/kubelet.conf

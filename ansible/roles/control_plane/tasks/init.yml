@@ -1,0 +1,69 @@
+---
+- name: Pull the kube-vip image
+  ansible.builtin.command: "ctr image pull ghcr.io/kube-vip/kube-vip:{{ kube_vip_version }}"
+  changed_when: false
+
+- name: Generate the kube-vip static pod manifest
+  ansible.builtin.command:
+    argv:
+      - ctr
+      - run
+      - --rm
+      - --net-host
+      - "ghcr.io/kube-vip/kube-vip:{{ kube_vip_version }}"
+      - vip
+      - /kube-vip
+      - manifest
+      - pod
+      - --interface
+      - "{{ kube_vip_interface }}"
+      - --address
+      - "{{ kube_api_vip }}"
+      - --controlplane
+      - --arp
+      - --leaderElection
+  register: control_plane_kube_vip
+  changed_when: false
+
+- name: Write the kube-vip manifest
+  ansible.builtin.copy:
+    content: "{{ control_plane_kube_vip.stdout }}\n"
+    dest: /etc/kubernetes/manifests/kube-vip.yaml
+    owner: root
+    group: root
+    mode: "0600"
+
+# Kubernetes 1.29+: admin.conf does not have rights until init finishes, so kube-vip
+# uses super-admin.conf for the first node. Reverted below.
+- name: Point kube-vip at super-admin.conf for init
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: /etc/kubernetes/admin\.conf
+    replace: /etc/kubernetes/super-admin.conf
+
+- name: Copy the kubeadm config
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../kubeadm/kubeadm-config.yaml"
+    dest: /root/kubeadm-config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Run kubeadm init
+  ansible.builtin.command: >-
+    kubeadm init --config /root/kubeadm-config.yaml
+    --skip-phases=addon/kube-proxy --upload-certs
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Point kube-vip back at admin.conf
+  ansible.builtin.replace:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    regexp: /etc/kubernetes/super-admin\.conf
+    replace: /etc/kubernetes/admin.conf
+
+- name: Fetch admin.conf to the controller
+  ansible.builtin.fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ lookup('ansible.builtin.env', 'HOME') }}/.kube/kube-at-home.conf"
+    flat: true

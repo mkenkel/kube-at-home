@@ -1,0 +1,27 @@
+---
+# Phase 1: kube-vip, kubeadm init and joins, Gateway API CRDs, Cilium. Re-runnable.
+# Flux bootstrap and the sops-age secret stay manual (they need a GitHub token and the age key).
+- name: Initialise the first control plane
+  hosts: control_plane[0]
+  roles:
+    - control_plane
+
+- name: Join the other control planes
+  hosts: control_plane[1:]
+  serial: 1  # one etcd member at a time
+  roles:
+    - control_plane
+
+- name: Join the workers
+  hosts: workers
+  roles:
+    - worker
+
+- name: Untaint control planes and install the CNI
+  hosts: control_plane[0]
+  tasks:
+    - name: Untaint control planes
+      ansible.builtin.include_tasks: roles/control_plane/tasks/untaint.yml
+    - name: Install Gateway API CRDs and Cilium
+      ansible.builtin.include_role:
+        name: cni

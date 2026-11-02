@@ -1,0 +1,9 @@
+---
+# Control planes also run workloads (knowledge/decisions/cluster-topology.md).
+- name: Remove the control-plane taint
+  ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  register: control_plane_untaint
+  changed_when: "'untainted' in control_plane_untaint.stdout"
+  failed_when: control_plane_untaint.rc != 0 and 'not found' not in control_plane_untaint.stderr

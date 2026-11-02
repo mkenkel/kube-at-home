@@ -1,0 +1,18 @@
+---
+# Runs on every control plane. The first one runs init.yml, the others join.yml.
+- name: Check for an existing cluster on this node
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: control_plane_kubelet_conf
+
+- name: Initialise the first control plane
+  ansible.builtin.include_tasks: init.yml
+  when:
+    - inventory_hostname == groups['control_plane'][0]
+    - not control_plane_kubelet_conf.stat.exists
+
+- name: Join the other control planes
+  ansible.builtin.include_tasks: join.yml
+  when:
+    - inventory_hostname != groups['control_plane'][0]
+    - not control_plane_kubelet_conf.stat.exists
