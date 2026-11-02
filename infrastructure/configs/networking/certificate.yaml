@@ -1,0 +1,14 @@
+# Wildcard for private apps (*.home.mkenkel.com). The apex mkenkel.com and the existing
+# tunnel hostnames are not covered and not touched.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: home-wildcard
+  namespace: gateway
+spec:
+  secretName: home-wildcard-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-staging
+  dnsNames:
+    - "*.home.mkenkel.com"

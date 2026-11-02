@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (issuers)
+* **Update**: Added the Let's Encrypt staging and prod ClusterIssuers, the `*.home.mkenkel.com` Certificate (staging) and the HTTPS Gateway listener. Not yet pushed or applied. See [Phase 2](/phases/phase-2-networking.md).
+
 ## 2026-11-01 (domain and cert-manager)
 * **Update**: Domain is `mkenkel.com` on Cloudflare; private apps go under `*.home.mkenkel.com`. Recorded the existing DNS records to avoid clobbering them in [Exposure and access](/decisions/exposure-access.md). Added a cert-manager `HelmRelease` (chart v1.21.3). Issuers wait for the ACME email and Cloudflare token.
 

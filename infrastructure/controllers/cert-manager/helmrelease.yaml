@@ -22,3 +22,8 @@ spec:
   values:
     crds:
       enabled: true
+    # Check DNS-01 challenges against public resolvers, not the local Unbound that overrides
+    # *.home.mkenkel.com (split horizon). Nodes must be allowed to reach these on port 53.
+    extraArgs:
+      - --dns01-recursive-nameservers-only
+      - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53
