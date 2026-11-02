@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (Phase 4 start)
+* **Update**: Added `kube-prometheus-stack` 92.17.0 (HelmRelease, SOPS-encrypted Grafana admin secret, Grafana HTTPRoute). Not yet pushed or applied. etcd, scheduler and controller-manager scrapes are disabled until their metrics are exposed. See [Phase 4](/phases/phase-4-observability-security.md).
+
 ## 2026-11-01 (Longhorn live)
 * **Update**: Flux installed Longhorn v1.13.0; the HelmRelease is Ready and all pods in `longhorn-system` are Running. Default StorageClass is `longhorn`. A 1Gi test PVC and pod worked (volume healthy, 3 replicas) and were deleted. The Cilium release stayed at revision 4, so there is no repeated-upgrade loop. See [Phase 3](/phases/phase-3-storage.md).
 
