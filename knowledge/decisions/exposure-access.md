@@ -15,3 +15,9 @@ sources:
 * Authentik is dropped. Private apps keep local logins.
 * Cloudflare Access fronts public apps. Caveats: it only covers tunnel traffic, mobile/API clients need WireGuard or service tokens, Wizarr invite paths need a bypass, and never proxy media streaming through the tunnel.
 * Cilium NetworkPolicies keep exposed apps from reaching the rest of the cluster.
+
+# Domain and DNS
+
+* Domain `mkenkel.com`, DNS hosted on Cloudflare. Private apps live under `*.home.mkenkel.com` (wildcard cert via Cloudflare DNS-01); the Gateway is at 192.168.15.100. Internal names get no public DNS records, only an OPNsense Unbound override for `*.home.mkenkel.com` pointing at the Gateway.
+* Existing records (screenshot 2026-11-01), none of which this repo may change: `mkenkel.com` A, `tesira` A 192.168.15.35, tunnel CNAMEs `deebo` (Deebo tunnel), `ha` (homeassistant tunnel), `docs`, `radarr`, `requests`, `sabnzbd`, `tabs`, `test` (`homelab-tunnel`), and the `_minecraft._tcp` SRV record.
+* The cert-manager Cloudflare token needs Zone:DNS:Edit and Zone:Zone:Read and cannot be limited to a subdomain, so it is SOPS-encrypted and scoped to the one zone. Moving a tunnel hostname to in-cluster `cloudflared` is a deliberate per-name cutover. If external-dns is added, restrict it to `home.mkenkel.com` with no sync policy.

@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-01 (domain and cert-manager)
+* **Update**: Domain is `mkenkel.com` on Cloudflare; private apps go under `*.home.mkenkel.com`. Recorded the existing DNS records to avoid clobbering them in [Exposure and access](/decisions/exposure-access.md). Added a cert-manager `HelmRelease` (chart v1.21.3). Issuers wait for the ACME email and Cloudflare token.
+
 ## 2026-11-01 (Phase 2 start)
 * **Update**: Added `infrastructure/configs/networking/` with the L2 pool (.100-.200), L2 announcement policy and an HTTP-only Gateway at .100. Not yet pushed or applied. DNS provider is Cloudflare; domain still to be chosen. See [Phase 2](/phases/phase-2-networking.md).
 
