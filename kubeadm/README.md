@@ -6,11 +6,11 @@ Unverified items are marked.
 
 ## 1. kube-vip on node-1
 
-Find the NIC name first (`ip -br link`), then on node-1 as root:
+node-1's NIC is `eno1` (from `ip -br link`). On node-1 as root:
 
 ```sh
 export VIP=192.168.15.6
-export INTERFACE=<nic>
+export INTERFACE=eno1
 export KVVERSION=v1.3.1
 alias kube-vip="ctr image pull ghcr.io/kube-vip/kube-vip:$KVVERSION; ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KVVERSION vip /kube-vip"
 kube-vip manifest pod --interface $INTERFACE --address $VIP --controlplane --arp --leaderElection \
