@@ -12,6 +12,9 @@ sources:
 
 # Open
 
+* NFS media volume: TrueNAS address, export path, UID/GID for the *arr stack. Blocks [Phase 3](/phases/phase-3-storage.md).
+* Security hardening: small version (PSA labels now, network policies per app namespace in Phase 5) or skip until Phase 5; see [Phase 4](/phases/phase-4-observability-security.md).
+* OPNsense Unbound override for `*.home.mkenkel.com` -> 192.168.15.100: done or not?
 * Which TrueNAS dataset or share holds the local Longhorn/Velero backups? Blocks [Phase 4](/phases/phase-4-observability-security.md).
 * Duplicati: what to back up and where to upload. Deferred until everything else is settled; see [Backups](/decisions/backups.md).
 

@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-02
+* **Update**: Handoff for resuming on another host: added [Current status and handoff](/status.md), recorded the Pod Security dry-run results and the pending hardening decision in [Phase 4](/phases/phase-4-observability-security.md), and listed the blocked items in [Open questions](/open-questions.md). Nothing was changed on the cluster.
+
 ## 2026-11-01 (logging live)
 * **Update**: Loki and Alloy are running and pod logs from five namespaces are queryable in Loki. First finding: steady kube-apiserver gRPC dial-cancel warnings to local etcd, probably benign. See [Phase 4](/phases/phase-4-observability-security.md).
 

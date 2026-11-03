@@ -26,5 +26,6 @@ OKF v0.2 bundle for the home Kubernetes cluster (4x M70q Gen2, kubeadm). Narrati
 
 # Other
 
+* [Current status and handoff](status.md) - where things stand, what is blocked, how to resume on another host
 * [Open questions](open-questions.md) - unresolved items blocking or shaping later phases
 * [Update log](log.md)
