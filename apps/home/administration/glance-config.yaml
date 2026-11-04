@@ -1,0 +1,80 @@
+# Glance's configuration. A plain ConfigMap (not Helm values) because app-template would run
+# Helm's templating over curly braces. Glance reloads the file when it changes; if a page
+# looks stale after an edit, restart the pod: kubectl -n glance rollout restart deploy/glance
+# Each check is made from the Glance pod against the same names you use in the browser, so a
+# green dot means the Gateway, the route and the app all answer. Apps with a login page answer
+# with a redirect, which counts as up (alt-status-codes).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: glance-config
+  namespace: glance
+data:
+  glance.yml: |
+    server:
+      port: 8080
+      proxied: true
+    branding:
+      hide-footer: true
+    pages:
+      - name: Home
+        columns:
+          - size: small
+            widgets:
+              - type: clock
+                hour-format: 12h
+                timezones:
+                  - timezone: UTC
+                    label: UTC
+              - type: bookmarks
+                title: Links
+                groups:
+                  - title: Project
+                    links:
+                      - title: kube-at-home on GitHub
+                        url: https://github.com/mkenkel/kube-at-home
+                      - title: Cloudflare dashboard
+                        url: https://dash.cloudflare.com
+          - size: full
+            widgets:
+              - type: monitor
+                title: Media
+                cache: 1m
+                sites:
+                  - title: Seerr
+                    url: https://overseerr.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+                  - title: Sonarr
+                    url: https://sonarr.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+                  - title: Radarr
+                    url: https://radarr.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+                  - title: Prowlarr
+                    url: https://prowlarr.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+                  - title: Sabnzbd
+                    url: https://sabnzbd.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+                  - title: Plex
+                    url: http://192.168.15.27:32400/web
+                    alt-status-codes: [301, 302, 303, 307, 308]
+              - type: monitor
+                title: Cluster
+                cache: 1m
+                sites:
+                  - title: Grafana
+                    url: https://grafana.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+                  - title: Hubble UI
+                    url: https://hubble.home.mkenkel.com
+                  - title: ntfy
+                    url: https://ntfy.home.mkenkel.com
+                    alt-status-codes: [301, 302, 303, 307, 308]
+              - type: monitor
+                title: Infrastructure
+                cache: 1m
+                sites:
+                  - title: TrueNAS
+                    url: http://192.168.15.24
+                    alt-status-codes: [301, 302, 303, 307, 308]

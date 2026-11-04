@@ -5,4 +5,8 @@ resources:
   - ntfy-auth.sops.yaml
   - networkpolicy.yaml
   - ntfy-templates.yaml
+  - glance-namespace.yaml
+  - glance-config.yaml
+  - glance-networkpolicy.yaml
   - ../../base/ntfy
+  - ../../base/glance
