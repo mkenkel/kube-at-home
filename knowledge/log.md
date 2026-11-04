@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (Hubble UI)
+* **Update**: Added an HTTPRoute for the already-running Hubble UI at `hubble.home.mkenkel.com` (LAN and WireGuard only, no login). No Cilium change, so no agent restart. See [Exposure and access](/decisions/exposure-access.md).
+
 ## 2026-11-04 (alert priority)
 * **Update**: Critical alerts now arrive urgent. ntfy's built-in alertmanager template sets no priority, so a custom template (ConfigMap `ntfy-templates`, used as `?template=cluster`) sets it: critical firing = 5, warning = 3, resolved = 2. Tested locally with sample payloads first, including an alert with no severity label. The template is a plain ConfigMap because app-template runs Helm's templating over `{{ }}` in values, which broke the first attempt. Also ticks the alerting items as applied and verified. See the [alerting runbook](/runbooks/alerting.md).
 

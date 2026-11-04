@@ -1,0 +1,19 @@
+# Hubble UI (Cilium's flow viewer), already deployed by the Cilium release in kube-system.
+# It has no login and shows every flow, pod name and DNS lookup in the cluster, read only.
+# LAN and WireGuard only, like the other internal apps. Do not publish it through the tunnel.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hubble-ui
+  namespace: kube-system
+spec:
+  parentRefs:
+    - name: home
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - hubble.home.mkenkel.com
+  rules:
+    - backendRefs:
+        - name: hubble-ui
+          port: 80
