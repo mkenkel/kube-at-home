@@ -13,6 +13,6 @@ sources:
 
 * Channel (chosen 2026-11-04): ntfy, self-hosted in the cluster, LAN only, auth on with default deny. The user wants nothing new exposed publicly; alerts reach the iPhone while it is on the LAN or the router's WireGuard VPN. Alternatives considered: public ntfy.sh with a secret topic (works anywhere but sends alert text through a third party), and self-hosted behind the tunnel (too many moving parts).
 * iPhone push needs ntfy.sh as a wake-up relay (`upstream-base-url`); only the message ID and a hash of the topic URL are sent there.
-* Rules: kube-prometheus-stack's defaults plus Longhorn rules (stale config backups, degraded or faulted volumes, node not ready, disk above 75% and 85%). Flux resources not ready, suspended or without a controller, and certificates expiring or not ready. Not done: higher phone priority for critical alerts.
+* Rules: kube-prometheus-stack's defaults plus Longhorn rules (stale config backups, degraded or faulted volumes, node not ready, disk above 75% and 85%). Flux resources not ready, suspended or without a controller, and certificates expiring or not ready. Priority comes from severity: critical firing is urgent, warnings normal, resolved quiet, through a custom ntfy template.
 * Not covered: a dead cluster or LAN cannot send alerts. A heartbeat to an external service would be needed for that and is not planned.
 * Details and operations: [Alerts and notifications runbook](/runbooks/alerting.md).

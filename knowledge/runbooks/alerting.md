@@ -20,7 +20,7 @@ Prometheus evaluates rules, sends firing alerts to Alertmanager, and Alertmanage
 
 * ntfy runs in the `ntfy` namespace (`apps/base/ntfy`, `apps/home/administration/`) at `https://ntfy.home.mkenkel.com`, LAN only, through the Gateway. Auth is on and everything is denied by default.
 * Two users, declared in config (the password hashes and the token are in the SOPS secret `ntfy-auth`): `alertmanager`, which may only publish to the topic `alerts` and authenticates with a token, and `phone`, which may only read `alerts`.
-* Alertmanager (in `monitoring`) uses the built-in ntfy template `alertmanager` for firing and resolved alerts, and the token from the SOPS secret `alertmanager-ntfy`. The always-firing `Watchdog` and `InfoInhibitor` are routed to a null receiver.
+* Alertmanager (in `monitoring`) posts to `/alerts?template=cluster`: a template kept in the ConfigMap `ntfy-templates` (`apps/home/administration/ntfy-templates.yaml`) that formats the alert and sets the priority (see Priorities below). The built-in `alertmanager` template sets none. It uses and the token from the SOPS secret `alertmanager-ntfy`. The always-firing `Watchdog` and `InfoInhibitor` are routed to a null receiver.
 * iPhone: Apple only allows pushes through its own service, so ntfy has `upstream-base-url: https://ntfy.sh`. For every message ntfy.sh receives only the message ID and a hash of the topic URL, never the text. The phone then fetches the message from `ntfy.home.mkenkel.com`, so **the phone must be able to reach that name** (home Wi-Fi or the router's WireGuard VPN with the router as DNS). Away from home without the VPN you get the wake-up but not the text.
 
 # iPhone setup **[human]**
@@ -40,6 +40,10 @@ From a pod that can reach Alertmanager (port-forward works too):
 
 The phone should buzz within about 30 seconds (Alertmanager's `group_wait`) and show a "resolved" message about five minutes later when the alert expires.
 
+# Priorities
+
+The `cluster` template sets the ntfy priority from the alert: a **critical** alert that is firing is **urgent (5)**, a warning is normal (3), and every **resolved** message is quiet (2), so a recovery does not buzz you. An alert without a `severity` label is treated as normal. Tested on a local ntfy with sample payloads for all four combinations and for a missing label. ntfy reads the template when it starts, so restart the pod after editing it: `kubectl -n ntfy rollout restart deploy/ntfy`. The template lives in a plain ConfigMap and not in the HelmRelease values, because app-template runs Helm's templating over `{{ }}` in values.
+
 # What is alerted on
 
 * The default kube-prometheus-stack rules: nodes, kubelet, API server, etcd, pods crash-looping, node filesystem filling up, target down, and so on.
@@ -48,7 +52,7 @@ The phone should buzz within about 30 seconds (Alertmanager's `group_wait`) and 
 * Flux (`alerts-flux.yaml`): a Kustomization, HelmRelease, GitRepository or HelmRepository not ready for 15 minutes (a sync normally goes unready for a minute or two while it waits for a dependency, so only a lasting state alerts), a resource suspended for an hour, a Flux controller with no available pod, and the Flux state metrics going missing (so the other Flux alerts cannot silently stop working). Flux's controllers expose no per-resource ready state, so `gotk_resource_info` comes from kube-state-metrics' custom resource state config (copied from fluxcd/flux2-monitoring-example for the four kinds used here, with the standard collectors left on, which that example turns off).
 * Certificates (`alerts-cert-manager.yaml`, from the cert-manager ServiceMonitor): a certificate expiring within 21 days (cert-manager renews at 30, so this means renewal has been failing for over a week), a certificate not ready for 15 minutes, and cert-manager's metrics missing.
 
-**Known gaps:** When the whole cluster or the LAN is down, nothing can notify you: Alertmanager lives inside the cluster. Critical alerts are not sent at a higher priority yet; ntfy's built-in template does not map severity to priority.
+**Known gaps:** When the whole cluster or the LAN is down, nothing can notify you: Alertmanager lives inside the cluster.
 
 # Add or change a rule
 

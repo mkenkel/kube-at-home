@@ -36,7 +36,7 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 # Next steps, in order
 
 1. The public cutover (tunnel token, Access, move `requests`), then retire the Docker Overseerr. Then the other Phase 5 categories, one per PR.
-2. Higher ntfy priority for critical alerts (small); then the other Phase 5 categories, one per PR.
+2. The other Phase 5 categories, one per PR.
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 
 # Resuming from another host

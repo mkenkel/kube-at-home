@@ -4,4 +4,5 @@ resources:
   - namespace.yaml
   - ntfy-auth.sops.yaml
   - networkpolicy.yaml
+  - ntfy-templates.yaml
   - ../../base/ntfy
