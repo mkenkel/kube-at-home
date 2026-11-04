@@ -1,9 +1,11 @@
 # Glance's configuration. A plain ConfigMap (not Helm values) because app-template would run
 # Helm's templating over curly braces. Glance reloads the file when it changes; if a page
 # looks stale after an edit, restart the pod: kubectl -n glance rollout restart deploy/glance
-# Each check is made from the Glance pod against the same names you use in the browser, so a
-# green dot means the Gateway, the route and the app all answer. Apps with a login page answer
-# with a redirect, which counts as up (alt-status-codes).
+# The links use the Gateway names you use in a browser. The checks (`check-url`) go straight to
+# each Service instead: a pod that calls a Gateway name gets "Access denied" from Envoy, because
+# its own egress policy is applied to the backend the Gateway forwards to. So a green dot means
+# the service itself answers its health URL, not that the Gateway route works. The matching
+# ports are opened in glance-networkpolicy.yaml, media-isolation and ntfy-isolation.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -43,19 +45,19 @@ data:
                 sites:
                   - title: Seerr
                     url: https://overseerr.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://overseerr.media.svc.cluster.local:5055/api/v1/status
                   - title: Sonarr
                     url: https://sonarr.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://sonarr.media.svc.cluster.local:8989/ping
                   - title: Radarr
                     url: https://radarr.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://radarr.media.svc.cluster.local:7878/ping
                   - title: Prowlarr
                     url: https://prowlarr.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://prowlarr.media.svc.cluster.local:9696/ping
                   - title: Sabnzbd
                     url: https://sabnzbd.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://sabnzbd.media.svc.cluster.local:8080/api?mode=version&output=json
                   - title: Plex
                     url: http://192.168.15.27:32400/web
                     alt-status-codes: [301, 302, 303, 307, 308]
@@ -65,12 +67,13 @@ data:
                 sites:
                   - title: Grafana
                     url: https://grafana.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/api/health
                   - title: Hubble UI
                     url: https://hubble.home.mkenkel.com
+                    check-url: http://hubble-ui.kube-system.svc.cluster.local/
                   - title: ntfy
                     url: https://ntfy.home.mkenkel.com
-                    alt-status-codes: [301, 302, 303, 307, 308]
+                    check-url: http://ntfy.ntfy.svc.cluster.local/v1/health
               - type: monitor
                 title: Infrastructure
                 cache: 1m
