@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (Glance checks)
+* **Update**: Glance was applied and served its page, but all 8 checks that used Gateway names showed 403 `Access denied` (Plex and TrueNAS, checked on the LAN, were fine). Cause: Envoy applies the calling pod's egress policy to the backend it forwards to. Glance now checks each service's own health URL on its own port, the links keep the Gateway names, and `glance-isolation`, `media-isolation` and `ntfy-isolation` open exactly those ports. A green dot now means the service answers, not that its Gateway route works. Noted in [Networking](/decisions/networking.md).
+
 ## 2026-11-04 (Glance)
 * **Update**: Added Glance, the home page with live up/down checks, at `glance.home.mkenkel.com` (LAN only, namespace `glance`, stateless, config in a ConfigMap). Icons are left out because Glance loads them from a public CDN. Config checked by running the same v0.8.7 binary locally. Gitea moves to last, at the user's request. See [Phase 5](/phases/phase-5-applications.md).
 

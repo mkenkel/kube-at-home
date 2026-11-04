@@ -16,6 +16,22 @@ spec:
         - {}
     - fromEntities:
         - ingress
+    # Glance's health checks, on the app ports only.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: glance
+      toPorts:
+        - ports:
+            - port: "5055"
+              protocol: TCP
+            - port: "7878"
+              protocol: TCP
+            - port: "8080"
+              protocol: TCP
+            - port: "8989"
+              protocol: TCP
+            - port: "9696"
+              protocol: TCP
     # The in-cluster cloudflared, for Overseerr (the only public app).
     - fromEndpoints:
         - matchLabels:
