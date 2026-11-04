@@ -15,3 +15,7 @@ resources:
   - headlamp-rbac.yaml
   - headlamp-networkpolicy.yaml
   - ../../base/headlamp
+  - gitea-namespace.yaml
+  - gitea-secrets.sops.yaml
+  - gitea-networkpolicy.yaml
+  - ../../base/gitea

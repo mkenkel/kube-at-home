@@ -1,0 +1,159 @@
+# Gitea: self-hosted Git, LAN only. Web UI behind the Gateway at gitea.home.mkenkel.com; git over
+# SSH on its own LoadBalancer IP (192.168.15.101, port 22) because the Gateway only carries HTTP(S).
+# SQLite on a Longhorn volume that is part of the nightly config backups. Registration is off and
+# nothing is readable without signing in. Details: knowledge/runbooks/gitea.md
+#
+# The rootless image rebuilds /etc/gitea/app.ini from the GITEA__section__KEY variables at every
+# start, so the config lives here and in the SOPS secret gitea-secrets (SECRET_KEY, OAuth2 JWT
+# secret) and the pod keeps only repositories, the database and the SSH host keys.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gitea
+  namespace: gitea
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      gitea:
+        # The data volume is ReadWriteOnce, so the old pod must stop first.
+        strategy: Recreate
+        pod:
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+        containers:
+          app:
+            image:
+              repository: docker.io/gitea/gitea
+              tag: 28.3.0-rootless
+            env:
+              TZ: America/New_York
+              # Created on first start; this is not a setup wizard install.
+              GITEA__security__INSTALL_LOCK: "true"
+              GITEA__server__DOMAIN: gitea.home.mkenkel.com
+              GITEA__server__ROOT_URL: https://gitea.home.mkenkel.com/
+              GITEA__server__HTTP_PORT: "3000"
+              # What clone URLs show (git@git.home.mkenkel.com:user/repo.git), as opposed to the
+              # port the built-in SSH server listens on inside the pod.
+              GITEA__server__SSH_DOMAIN: git.home.mkenkel.com
+              GITEA__server__SSH_PORT: "22"
+              GITEA__server__SSH_LISTEN_PORT: "2222"
+              # No Gravatar or CDN lookups.
+              GITEA__server__OFFLINE_MODE: "true"
+              GITEA__database__DB_TYPE: sqlite3
+              GITEA__service__DISABLE_REGISTRATION: "true"
+              GITEA__service__REQUIRE_SIGNIN_VIEW: "true"
+              GITEA__actions__ENABLED: "false"
+              GITEA__openid__ENABLE_OPENID_SIGNIN: "false"
+              GITEA__log__MODE: console
+            envFrom:
+              - secretRef:
+                  name: gitea-secrets
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+            probes:
+              # Startup can take a while after an upgrade (database migrations).
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/healthz
+                    port: 3000
+                  periodSeconds: 5
+                  failureThreshold: 36
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/healthz
+                    port: 3000
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/healthz
+                    port: 3000
+    service:
+      app:
+        controller: gitea
+        ports:
+          http:
+            port: 3000
+      ssh:
+        controller: gitea
+        type: LoadBalancer
+        annotations:
+          # Fixed address from the Cilium pool (infrastructure/configs/networking/l2.yaml) so the
+          # DNS record git.home.mkenkel.com stays valid.
+          lbipam.cilium.io/ips: 192.168.15.101
+        ports:
+          ssh:
+            port: 22
+            targetPort: 2222
+    route:
+      app:
+        hostnames:
+          - gitea.home.mkenkel.com
+        parentRefs:
+          - name: home
+            namespace: gateway
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: 3000
+    persistence:
+      data:
+        type: persistentVolumeClaim
+        # Keep the repositories if this release is ever removed.
+        retain: true
+        # Include this volume in the Longhorn config backups.
+        labels:
+          recurring-job.longhorn.io/source: enabled
+          recurring-job-group.longhorn.io/config: enabled
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        globalMounts:
+          - path: /var/lib/gitea
+      # app.ini is regenerated at each start, so it needs a writable place but not a volume.
+      config:
+        type: emptyDir
+        globalMounts:
+          - path: /etc/gitea
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
