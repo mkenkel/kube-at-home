@@ -4,3 +4,6 @@ resources:
   - httproute.yaml
   - longhorn-servicemonitor.yaml
   - alerts-longhorn.yaml
+  - cert-manager-servicemonitor.yaml
+  - alerts-flux.yaml
+  - alerts-cert-manager.yaml

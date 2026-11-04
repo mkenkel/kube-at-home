@@ -1,0 +1,15 @@
+# cert-manager's controller exposes certificate metrics on 9402. Defined here, not through the
+# chart value, so it applies after the monitoring CRDs exist (same reason as the Longhorn one).
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/component: controller
+  endpoints:
+    - port: http-metrics
+      interval: 60s

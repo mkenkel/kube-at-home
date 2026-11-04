@@ -1,0 +1,49 @@
+# Flux alerts. `gotk_resource_info` comes from kube-state-metrics' custom resource state config for
+# Flux (infrastructure/controllers/monitoring/helmrelease.yaml); Flux's own controllers expose no
+# per-resource ready state. Delivery: knowledge/runbooks/alerting.md.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flux-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: flux
+      rules:
+        - alert: FluxResourceNotReady
+          # A sync normally goes Unknown or False for a minute or two while it waits for a dependency,
+          # so only a state that lasts is worth a phone buzz.
+          expr: gotk_resource_info{ready=~"False|Unknown", suspended!="true"}
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Flux {{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} is not ready
+            description: It has not been ready for 15 minutes. Look at `flux get all -A` and `kubectl -n {{ $labels.exported_namespace }} describe {{ $labels.customresource_kind }} {{ $labels.name }}`.
+        - alert: FluxResourceSuspended
+          expr: gotk_resource_info{suspended="true"}
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: Flux {{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} has been suspended for an hour
+            description: Someone ran `flux suspend` and it was not resumed. Git changes to it are not being applied.
+        - alert: FluxControllerUnavailable
+          expr: kube_deployment_status_replicas_available{namespace="flux-system", deployment=~".*-controller"} < 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Flux controller {{ $labels.deployment }} has no available pod
+            description: Nothing in Git is being applied while a Flux controller is down.
+        - alert: FluxStateMetricsMissing
+          # If kube-state-metrics stops exporting Flux state, the alerts above would go silent.
+          expr: absent(gotk_resource_info)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: No Flux resource state in Prometheus
+            description: The kube-state-metrics custom resource config for Flux is not producing gotk_resource_info, so Flux alerts cannot fire.

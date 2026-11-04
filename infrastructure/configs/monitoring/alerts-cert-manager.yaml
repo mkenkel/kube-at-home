@@ -1,0 +1,38 @@
+# Certificate alerts, from the cert-manager ServiceMonitor (cert-manager-servicemonitor.yaml).
+# Delivery: knowledge/runbooks/alerting.md.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: cert-manager
+      rules:
+        - alert: CertManagerCertExpirySoon
+          # Renewal starts 30 days before expiry, so this means renewal has been failing for over a week.
+          expr: certmanager_certificate_expiration_timestamp_seconds - time() < 21 * 24 * 3600
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: Certificate {{ $labels.exported_namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }}
+            description: cert-manager should have renewed it already. Check `kubectl -n {{ $labels.exported_namespace }} describe certificate {{ $labels.name }}` and the ClusterIssuer (the Cloudflare token).
+        - alert: CertManagerCertNotReady
+          expr: certmanager_certificate_ready_status{condition="False"} == 1
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: Certificate {{ $labels.exported_namespace }}/{{ $labels.name }} is not ready
+            description: Issuance or renewal is failing. Check the Certificate, its CertificateRequest and Order, and the Cloudflare DNS-01 token.
+        - alert: CertManagerMetricsMissing
+          expr: absent(certmanager_certificate_ready_status)
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: No cert-manager certificate metrics in Prometheus
+            description: The cert-manager ServiceMonitor is not being scraped, so certificate alerts cannot fire.

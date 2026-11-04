@@ -45,7 +45,10 @@ The phone should buzz within about 30 seconds (Alertmanager's `group_wait`) and 
 * The default kube-prometheus-stack rules: nodes, kubelet, API server, etcd, pods crash-looping, node filesystem filling up, target down, and so on.
 * Longhorn (`infrastructure/configs/monitoring/alerts-longhorn.yaml`): a config volume without a backup for 36 hours (or ever), a degraded volume for 20 minutes, a faulted volume, a Longhorn node not ready, and the Longhorn disk above 75% (warning) or 85% (critical). Each node has one NVMe that also holds etcd, so disk space matters.
 
-**Known gaps:** Flux sync failures and certificate expiry are not alerted on yet (Flux's controllers expose no per-resource ready state, so it needs kube-state-metrics custom resource state, and cert-manager's metrics are not scraped yet). When the whole cluster or the LAN is down, nothing can notify you: Alertmanager lives inside the cluster.
+* Flux (`alerts-flux.yaml`): a Kustomization, HelmRelease, GitRepository or HelmRepository not ready for 15 minutes (a sync normally goes unready for a minute or two while it waits for a dependency, so only a lasting state alerts), a resource suspended for an hour, a Flux controller with no available pod, and the Flux state metrics going missing (so the other Flux alerts cannot silently stop working). Flux's controllers expose no per-resource ready state, so `gotk_resource_info` comes from kube-state-metrics' custom resource state config (copied from fluxcd/flux2-monitoring-example for the four kinds used here, with the standard collectors left on, which that example turns off).
+* Certificates (`alerts-cert-manager.yaml`, from the cert-manager ServiceMonitor): a certificate expiring within 21 days (cert-manager renews at 30, so this means renewal has been failing for over a week), a certificate not ready for 15 minutes, and cert-manager's metrics missing.
+
+**Known gaps:** When the whole cluster or the LAN is down, nothing can notify you: Alertmanager lives inside the cluster. Critical alerts are not sent at a higher priority yet; ntfy's built-in template does not map severity to priority.
 
 # Add or change a rule
 
