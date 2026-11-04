@@ -1,0 +1,78 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: overseerr
+  namespace: media
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      overseerr:
+        # The config volume is ReadWriteOnce, so the old pod must stop first.
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: docker.io/sctx/overseerr
+              tag: 1.35.0
+            env:
+              TZ: America/New_York
+              PORT: "5055"
+              LOG_LEVEL: info
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 60
+                  periodSeconds: 5
+    service:
+      app:
+        controller: overseerr
+        ports:
+          http:
+            port: 5055
+    route:
+      app:
+        hostnames:
+          - overseerr.home.mkenkel.com
+        parentRefs:
+          - name: home
+            namespace: gateway
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: 5055
+    persistence:
+      config:
+        type: persistentVolumeClaim
+        # Keep the volume (and the migrated settings) if this release is ever removed.
+        retain: true
+        accessMode: ReadWriteOnce
+        size: 2Gi
+        globalMounts:
+          - path: /app/config

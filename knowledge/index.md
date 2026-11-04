@@ -24,6 +24,10 @@ OKF v0.2 bundle for the home Kubernetes cluster (4x M70q Gen2, kubeadm). Narrati
 * [Phase 4: Observability and security](phases/phase-4-observability-security.md) - Prometheus, Loki, policies, backups
 * [Phase 5: Applications](phases/phase-5-applications.md) - category-by-category rollout
 
+# Runbooks
+
+* [Move the media apps from Docker](runbooks/media-migration.md) - migration order, commands and rollback for Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr
+
 # Other
 
 * [Current status and handoff](status.md) - where things stand, what is blocked, how to resume on another host
