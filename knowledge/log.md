@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-03 (security decision)
+* **Update**: The user chose the small hardening plan. Wrote PSA `enforce: restricted` labels for `cert-manager`, `gateway` and `flux-system` (the last through a patch in `clusters/home/flux-system/kustomization.yaml`); `kustomize build` and `yamllint` pass and a server-side dry-run showed no warnings. Not pushed or applied. `default` is unmanaged in Git and stays unlabelled. Network policies come per app namespace in Phase 5. See [Phase 4](/phases/phase-4-observability-security.md).
+
 ## 2026-11-03 (NFS applied)
 * **Update**: Merged PR #1 and Flux applied the `media` namespace, PV `media-nfs` and claim `media/media` (Bound). A throwaway pod running as 568:568 mounted it from node-3, listed the library, created and deleted a file, and was removed. Only node-3 was tested. See [Phase 3](/phases/phase-3-storage.md).
 
