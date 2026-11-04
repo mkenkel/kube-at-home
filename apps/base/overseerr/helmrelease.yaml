@@ -24,11 +24,31 @@ spec:
       overseerr:
         # The config volume is ReadWriteOnce, so the old pod must stop first.
         strategy: Recreate
+        # Overseerr is archived (last release 1.35.0, 2026-02-15). Seerr is its successor and
+        # migrates the existing config and database on first start. The release, Service,
+        # route and volume keep the name `overseerr` so nothing else has to change.
+        # Seerr runs as the non-root `node` user (uid 1000); settings follow the migration
+        # guide, https://docs.seerr.dev/migration-guide/
+        pod:
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
         containers:
           app:
             image:
-              repository: docker.io/sctx/overseerr
-              tag: 1.35.0
+              repository: ghcr.io/seerr-team/seerr
+              tag: v3.5.1
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
             env:
               TZ: America/New_York
               PORT: "5055"
