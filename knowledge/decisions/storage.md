@@ -22,7 +22,8 @@ sources:
 * The Docker host (`dockery`) and `plexy` mount the same export at `/media`. Its `*arr` containers run as 568 through `MEDIA_PUID`/`MEDIA_PGID` in the Ansible `env.j2`; other containers on that host keep their own IDs.
 * In the cluster: a static `PersistentVolume` (`media-nfs`, `Retain`, empty storage class so Longhorn's default class does not claim it) bound to the claim `media/media`. Pods that need to write should run as 568 or rely on Mapall.
 * `downloads/` exists on the export but is unused. The Docker stack still downloads to local NVMe and copies to the NAS, and the cluster apps should avoid that: mount one volume containing both library and downloads in each app so imports are renames. Not yet applied on the Docker side.
-* Not done: the old `/mnt/Poolio` share is still active, and nothing has mounted the PV from a node yet.
+* Verified 2026-11-03: a pod running as 568:568 mounted the claim from node-3 and could read, write and delete. The other three nodes were not tested.
+* Not done: the old `/mnt/Poolio` share is still active.
 
 # Disks (2026-11-01)
 
