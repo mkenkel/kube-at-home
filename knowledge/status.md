@@ -21,7 +21,7 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 | 1 Bootstrap | Done. `ansible/cluster.yml` built the cluster; Flux bootstrapped; Cilium adopted by Flux. |
 | 2 Networking | Done. L2 pool `.100-.200`, Gateway `gateway/home` at 192.168.15.100, wildcard `*.home.mkenkel.com`. |
 | 3 Storage | Longhorn done and tested with a PVC. NFS media export is live on TrueNAS (568:568); PV `media-nfs` and claim `media/media` are applied by Flux and a test pod on node-3 read and wrote it. Other nodes untested. |
-| 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. PSA `restricted` labels for `cert-manager`, `gateway` and `flux-system` are written on branch `psa-labels` (not pushed or applied). **Network policies (Phase 5) and backups not applied.** |
+| 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. PSA `restricted` enforced on `cert-manager`, `gateway` and `flux-system` (applied 2026-11-03). **Network policies (Phase 5) and backups not applied.** |
 | 5 Applications | Not started. |
 
 # Blocked on the user
@@ -29,12 +29,10 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 * Backups (Longhorn recurring backups, Velero): deferred until apps are hosted; configs and databases only, not media. The TrueNAS `k8s` pool is the candidate.
 * Optional TrueNAS tidy: remove the old `/mnt/Poolio` NFS share once nothing mounts it, and the unused `k8s` iSCSI/NFS leftovers.
 * OPNsense Unbound host override `*` / `home.mkenkel.com` -> 192.168.15.100 (was being set up; not confirmed done). Without it `grafana.home.mkenkel.com` does not resolve on the LAN.
-* Review and push branch `psa-labels` (PSA labels, see [Phase 4](/phases/phase-4-observability-security.md)). The user chose the small plan on 2026-11-03: labels now, network policies per app namespace in Phase 5.
 
 # Next steps, in order
 
-1. Merge the PSA label branch and confirm Flux applies it (the pods already running are not evicted).
-2. Phase 5 apps, one category per PR (media apps mount the `media/media` claim as one volume holding library and downloads).
+1. Phase 5 apps, one category per PR (media apps mount the `media/media` claim as one volume holding library and downloads).
 3. Backups once the dataset is chosen; first test restore.
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 

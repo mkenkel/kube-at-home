@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-03 (PSA applied)
+* **Update**: Merged PR #3 and Flux applied the PSA `enforce: restricted` labels on `cert-manager`, `gateway` and `flux-system`. Read-only check afterwards: all Kustomizations Ready on the new revision, every HelmRelease Ready, no pod outside Running/Completed. `apps` briefly showed "dependency not ready" while `infrastructure-configs` reconciled, as it did after the earlier merges. See [Phase 4](/phases/phase-4-observability-security.md).
+
 ## 2026-11-03 (security decision)
 * **Update**: The user chose the small hardening plan. Wrote PSA `enforce: restricted` labels for `cert-manager`, `gateway` and `flux-system` (the last through a patch in `clusters/home/flux-system/kustomization.yaml`); `kustomize build` and `yamllint` pass and a server-side dry-run showed no warnings. Not pushed or applied. `default` is unmanaged in Git and stays unlabelled. Network policies come per app namespace in Phase 5. See [Phase 4](/phases/phase-4-observability-security.md).
 
