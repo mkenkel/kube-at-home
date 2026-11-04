@@ -24,6 +24,16 @@ spec:
     remediation:
       retries: 3
   values:
+    # The chart's manager network policy only admits Longhorn's own pods, so Prometheus could never
+    # scrape port 9500. Allow Prometheus only: that port also serves the Longhorn REST API.
+    networkPolicies:
+      metricsScrapeSources:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
     persistence:
       defaultClass: true
       defaultClassReplicaCount: 3

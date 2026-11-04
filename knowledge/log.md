@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (alerting)
+* **Update**: Added alerting: self-hosted ntfy (LAN only, auth with default deny, iPhone wake-up via ntfy.sh), Alertmanager delivery to it, and Longhorn alert rules. Found that Prometheus could never scrape Longhorn because the chart's manager network policy admits only Longhorn pods; fixed with `networkPolicies.metricsScrapeSources` for Prometheus only. Rotated the leaked Sabnzbd and Sonarr API keys on 2026-11-03 (also updated Sonarr, Radarr and Seerr to the new keys). Folded in: the first backup and restore test of the Prowlarr volume, the dataset-permission pitfall, the NFSv4.0 callback explanation of the firewall noise, and CI having passed on every PR. See [Alerting](/decisions/alerting.md) and the [runbook](/runbooks/alerting.md).
+
 ## 2026-11-03 (backups)
 * **Update**: Designed backups of the app config volumes. Longhorn recurring jobs (nightly keep 14, weekly keep 8, group `config`) and the NFS backup target `nfs://192.168.15.24:/mnt/k8s/longhorn-backups` are written under `infrastructure/configs/longhorn/`; the five media config volumes and Grafana opt in through PVC labels, Prometheus and Loki do not. The `default` BackupTarget is set directly because the chart value would not clearly update an existing target. Velero is dropped. The TrueNAS dataset and share are still to be created by the user. Also ticks the Seerr upgrade as applied and verified. See [Backups](/decisions/backups.md) and the [runbook](/runbooks/backup-restore.md).
 

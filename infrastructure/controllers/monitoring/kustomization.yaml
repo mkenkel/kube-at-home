@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - grafana-admin.sops.yaml
+  - alertmanager-ntfy.sops.yaml
   - helmrepository.yaml
   - helmrelease.yaml
   - helmrepositories-logging.yaml

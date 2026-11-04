@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: ntfy-auth
+    namespace: ntfy
+type: Opaque
+stringData:
+    NTFY_AUTH_USERS: ENC[AES256_GCM,data:DtNv1He6nBDgih3hK632U22+VetvOjZMaQ1BIfHt3VpSAz5z0Ycz8Tva/+HG4DkmYo4ftDMfze4QGJHgkDnp8A4GSlBYQe6SF7+Gr2BaQPgLlXX7nvqXI96IZ6PbtyD9aWn5uC3RlwBULa1SP9YWV0uZ3Auu0Cio2oOY+VJYle0VzhGGNuTbpjB45/cspLAezevObpUQ,iv:lluxX72ZXRjSfx3KNJcgPPMrWKPBTsPGI254Acs1ixM=,tag:alJVCDeossumROXNcvb2PA==,type:str]
+    NTFY_AUTH_TOKENS: ENC[AES256_GCM,data:kaPtvCmMohtaPZsJ+P2yIeex6o6pyGN4Ruaud4/hgjx1aqcuByXWLtvnu+HuHl3KmRUo9w6C0g01jA==,iv:tB/51+0rj0jDg/I9AtxuC5c4/G9q9kUIgk3p4tdc8hI=,tag:dx1DkxfeCA1EsuzZTP3g7Q==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBzVW5PTFI2RDlaWlhaSXB2
+            YmJPQ3IrWVRDU0VHRVVReC8rM2pMNVZTTkJjCmFYOSt0Skdnb0lwS2xBcXNMM1R1
+            MVJ6Umc1QmlpYnB2NU1Ga0xDV0k0V28KLS0tIGo5NTFnL1l4NHh1TUxSZDluV3RX
+            NmN4ei8xT2ZlSDI3Yks5dW9ZaFJhODgK6TVN3fPr1JVunOZJCK3V5htadBLawzry
+            GRLgc/Jp8167q627vhxmIkPtsD62K+ap8E6iMdP9f0eVv3R+VK/WBQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cf0ee6n2c55zyzhgdngzrw3xu86mu9mdae28mdha4kzr9x2h8g2qnwputp
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-04T03:20:48Z"
+    mac: ENC[AES256_GCM,data:X+6zIXx0Qe4rDrsnK+3qQQsaCHHLCPK5vvPHvplbJnNG/zRcsTNlmSamSFq7Vn5m5hFNFoJDXHiCNmPtyPUqKRvwEeuW2tI1F/q0Ov9N+AoeHso9CuTbJaaP6xMrARR3CBkxIKlYIsyQXntSaZstrP+is/MgQ78Lm7zDv0hhjBc=,iv:m6/8FwsJ6TpRfqEWcONMSvIRpg1O2FbLT6BO1/Pvoe4=,tag:zy+vlXCcJgbX3O7bWqvOmw==,type:str]
+    version: 3.13.3

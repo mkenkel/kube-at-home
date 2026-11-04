@@ -1,0 +1,70 @@
+# Alert rules for Longhorn. The `release` label is what makes the Prometheus from
+# kube-prometheus-stack load them. Delivery: Alertmanager -> ntfy (knowledge/runbooks/alerting.md).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: longhorn-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: longhorn-backups
+      rules:
+        - alert: LonghornConfigBackupStale
+          # longhorn_volume_last_backup_at is a Unix timestamp, 0 for a volume never backed up.
+          # Only the volumes that opt in to the config backups (see backup-restore.md).
+          expr: |
+            time() - longhorn_volume_last_backup_at{
+              pvc_namespace=~"media|monitoring",
+              pvc=~"sonarr|radarr|sabnzbd|prowlarr|overseerr|kube-prometheus-stack-grafana"
+            } > 36 * 3600
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: No recent Longhorn backup of {{ $labels.pvc_namespace }}/{{ $labels.pvc }}
+            description: The last backup is more than 36 hours old, or there never was one. Check the backup target (kubectl -n longhorn-system get backuptargets.longhorn.io default) and the recurring jobs.
+    - name: longhorn-volumes
+      rules:
+        - alert: LonghornVolumeDegraded
+          expr: longhorn_volume_robustness{state="degraded"} == 1
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is degraded
+            description: One or more replicas are missing. Longhorn normally rebuilds them on its own; if it stays like this, check node and disk health.
+        - alert: LonghornVolumeFaulted
+          expr: longhorn_volume_robustness{state="faulted"} == 1
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is faulted
+            description: No healthy replica is left. Restore from the latest backup (knowledge/runbooks/backup-restore.md).
+        - alert: LonghornNodeNotReady
+          expr: longhorn_node_status{condition="ready"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn reports node {{ $labels.node }} not ready
+            description: The node's Longhorn manager is not ready, so replicas on it are unavailable.
+        - alert: LonghornDiskUsageHigh
+          # Each node has one NVMe shared by the OS, etcd and Longhorn, so keep well clear of full.
+          expr: longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes > 0.75
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Disk on {{ $labels.node }} is {{ $value | humanizePercentage }} full
+            description: The single NVMe holds the OS, etcd and Longhorn replicas. Free space or grow capacity before it gets critical.
+        - alert: LonghornDiskUsageCritical
+          expr: longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes > 0.85
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: Disk on {{ $labels.node }} is {{ $value | humanizePercentage }} full
+            description: Above 85% on the disk that also holds etcd. Act now.
