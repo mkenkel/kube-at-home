@@ -31,13 +31,13 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 * A new Cloudflare tunnel token (as a SOPS secret) and an Access policy for `requests`, then moving that hostname off the Docker tunnel; and removing the old `radarr` and `sabnzbd` tunnel hostnames in Cloudflare. See the [runbook](/runbooks/media-migration.md).
 * `dockery` (the Docker host) is meant to join the cluster later. The Ansible repo for it is outside this repo and was left alone, so do not run its playbook: it still defines the migrated apps and would restart the Docker copies.
 * Optional TrueNAS tidy: remove the old `/mnt/Poolio` NFS share once nothing mounts it, and the unused `k8s` iSCSI/NFS leftovers.
-* Gitea first use (after the PR merges): OPNsense host override `git.home.mkenkel.com` -> 192.168.15.101, create the admin account, add an SSH key: [runbook](/runbooks/gitea.md).
+* Gitea first use: create the admin account and add an SSH key (the `git.mkenkel.com` DNS override is done): [runbook](/runbooks/gitea.md).
 * OPNsense Unbound host override `*` / `home.mkenkel.com` -> 192.168.15.100 (was being set up; not confirmed done). Without it `grafana.home.mkenkel.com` does not resolve on the LAN.
 
 # Next steps, in order
 
 1. The public cutover (tunnel token, Access, move `requests`), then retire the Docker Overseerr. Then the other Phase 5 categories, one per PR.
-2. Gitea (in review; last Phase 5 app). After it merges, run the first-use steps in the [Gitea runbook](/runbooks/gitea.md).
+2. Gitea is deployed (last Phase 5 app); run the first-use steps in the [Gitea runbook](/runbooks/gitea.md).
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 
 # Resuming from another host

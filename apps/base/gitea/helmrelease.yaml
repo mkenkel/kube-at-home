@@ -1,5 +1,5 @@
 # Gitea: self-hosted Git, LAN only. Web UI behind the Gateway at gitea.home.mkenkel.com; git over
-# SSH on its own LoadBalancer IP (192.168.15.101, port 22) because the Gateway only carries HTTP(S).
+# SSH at git.mkenkel.com on its own LoadBalancer IP (192.168.15.101, port 22) because the Gateway only carries HTTP(S).
 # SQLite on a Longhorn volume that is part of the nightly config backups. Registration is off and
 # nothing is readable without signing in. Details: knowledge/runbooks/gitea.md
 #
@@ -48,9 +48,9 @@ spec:
               GITEA__server__DOMAIN: gitea.home.mkenkel.com
               GITEA__server__ROOT_URL: https://gitea.home.mkenkel.com/
               GITEA__server__HTTP_PORT: "3000"
-              # What clone URLs show (git@git.home.mkenkel.com:user/repo.git), as opposed to the
+              # What clone URLs show (git@git.mkenkel.com:user/repo.git), as opposed to the
               # port the built-in SSH server listens on inside the pod.
-              GITEA__server__SSH_DOMAIN: git.home.mkenkel.com
+              GITEA__server__SSH_DOMAIN: git.mkenkel.com
               GITEA__server__SSH_PORT: "22"
               GITEA__server__SSH_LISTEN_PORT: "2222"
               # No Gravatar or CDN lookups.
@@ -117,7 +117,8 @@ spec:
         type: LoadBalancer
         annotations:
           # Fixed address from the Cilium pool (infrastructure/configs/networking/l2.yaml) so the
-          # DNS record git.home.mkenkel.com stays valid.
+          # DNS override git.mkenkel.com stays valid. The name is outside home.mkenkel.com on purpose: the
+          # wildcard override for that zone makes Unbound refuse any specific name inside it.
           lbipam.cilium.io/ips: 192.168.15.101
         ports:
           ssh:
