@@ -1,6 +1,7 @@
 # Glance's configuration. A plain ConfigMap (not Helm values) because app-template would run
-# Helm's templating over curly braces. Glance reloads the file when it changes; if a page
-# looks stale after an edit, restart the pod: kubectl -n glance rollout restart deploy/glance
+# Helm's templating over curly braces. A change reaches the pod after about a minute, then
+# Glance reloads by itself (it logs "Config file changed, reloading"); if a page still looks
+# stale after that, restart the pod: kubectl -n glance rollout restart deploy/glance
 # The links use the Gateway names you use in a browser. The checks (`check-url`) go straight to
 # each Service instead: a pod that calls a Gateway name gets "Access denied" from Envoy, because
 # its own egress policy is applied to the backend the Gateway forwards to. So a green dot means

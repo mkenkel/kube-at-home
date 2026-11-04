@@ -1,0 +1,63 @@
+# The account you mint a Headlamp login token for. Read only, and no Secrets.
+#   kubectl -n headlamp create token headlamp-viewer --duration=8h
+# `view` covers the built-in resources (workloads, services, config maps, events, ...) but not
+# cluster-scoped ones or custom resources, so the extra role adds get/list/watch for those.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp-viewer
+  namespace: headlamp
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-viewer-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: headlamp-viewer
+    namespace: headlamp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: headlamp-viewer-extra
+rules:
+  # Cluster-scoped built-ins that `view` leaves out. Deliberately no secrets, no nodes/proxy.
+  - apiGroups: [""]
+    resources: ["nodes", "persistentvolumes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io", "apiextensions.k8s.io", "scheduling.k8s.io", "node.k8s.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  # Custom resources of what runs here: Flux, Cilium, Longhorn, Prometheus, Gateway API, cert-manager.
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - kustomize.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+      - notification.toolkit.fluxcd.io
+      - cilium.io
+      - longhorn.io
+      - monitoring.coreos.com
+      - gateway.networking.k8s.io
+      - cert-manager.io
+      - acme.cert-manager.io
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-viewer-extra
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: headlamp-viewer-extra
+subjects:
+  - kind: ServiceAccount
+    name: headlamp-viewer
+    namespace: headlamp
