@@ -56,6 +56,10 @@ spec:
         enabled: true
         storageClassName: longhorn
         size: 5Gi
+        # Include this volume in the Longhorn config backups.
+        extraPvcLabels:
+          recurring-job.longhorn.io/source: enabled
+          recurring-job-group.longhorn.io/config: enabled
       grafana.ini:
         server:
           root_url: https://grafana.home.mkenkel.com

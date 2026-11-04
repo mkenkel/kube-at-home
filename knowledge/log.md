@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-03 (backups)
+* **Update**: Designed backups of the app config volumes. Longhorn recurring jobs (nightly keep 14, weekly keep 8, group `config`) and the NFS backup target `nfs://192.168.15.24:/mnt/k8s/longhorn-backups` are written under `infrastructure/configs/longhorn/`; the five media config volumes and Grafana opt in through PVC labels, Prometheus and Loki do not. The `default` BackupTarget is set directly because the chart value would not clearly update an existing target. Velero is dropped. The TrueNAS dataset and share are still to be created by the user. Also ticks the Seerr upgrade as applied and verified. See [Backups](/decisions/backups.md) and the [runbook](/runbooks/backup-restore.md).
+
 ## 2026-11-03 (media migrated, Seerr)
 * **Update**: Moved Prowlarr, Sonarr, Radarr, Sabnzbd and Overseerr from the Docker stack into the `media` namespace with their existing data; counts matched (25 series / 975 files, 92 movies, 122 requests, 1 user). Docker copies of the first four stopped, Docker Overseerr left running for the public hostname. Rewrote the [migration runbook](/runbooks/media-migration.md) from plan to record with the pitfalls found: backups omit cover art, restore needs a pod restart, download clients used the Docker IP, Sabnzbd's host whitelist needs the service names, Radarr collections carry their own root folder, Overseerr's server entries and request folders. Overseerr's repository is archived, so its release now runs Seerr v3.5.1 (config backed up and volume chowned first). The Ansible repo for dockery is left alone on purpose. See [Phase 5](/phases/phase-5-applications.md).
 

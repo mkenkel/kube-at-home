@@ -72,6 +72,10 @@ spec:
         type: persistentVolumeClaim
         # Keep the volume (and the migrated settings) if this release is ever removed.
         retain: true
+        # Include this volume in the Longhorn config backups.
+        labels:
+          recurring-job.longhorn.io/source: enabled
+          recurring-job-group.longhorn.io/config: enabled
         accessMode: ReadWriteOnce
         size: 2Gi
         globalMounts:

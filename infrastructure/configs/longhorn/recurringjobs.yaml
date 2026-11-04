@@ -1,0 +1,30 @@
+# Backups of the app config volumes to the TrueNAS NFS backup target (set in the
+# Longhorn HelmRelease). A volume is included by labelling its PVC (see
+# knowledge/runbooks/backup-restore.md); Prometheus and Loki are deliberately left out.
+# Longhorn backups are incremental and crash-consistent. The *arr apps also write their
+# own scheduled backups into their config volume.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: config-nightly
+  namespace: longhorn-system
+spec:
+  task: backup
+  cron: "30 2 * * *"
+  retain: 14
+  concurrency: 2
+  groups:
+    - config
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: config-weekly
+  namespace: longhorn-system
+spec:
+  task: backup
+  cron: "30 3 * * 0"
+  retain: 8
+  concurrency: 2
+  groups:
+    - config
