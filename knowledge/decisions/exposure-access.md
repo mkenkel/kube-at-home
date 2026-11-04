@@ -4,7 +4,7 @@ title: Exposure and access
 description: Private by default (LAN + WireGuard); only Jellyseerr and Wizarr go public via Cloudflare Tunnel with Cloudflare Access.
 tags: [cloudflare, access, wireguard, security]
 status: stable
-generated: { by: claude/claude-sonnet-5-5, at: 2026-10-27T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
 sources:
   - id: dp
     resource: /deployment-plan.md
@@ -15,6 +15,7 @@ sources:
 * Authentik is dropped. Private apps keep local logins.
 * Cloudflare Access fronts public apps. Caveats: it only covers tunnel traffic, mobile/API clients need WireGuard or service tokens, Wizarr invite paths need a bypass, and never proxy media streaming through the tunnel.
 * Cilium NetworkPolicies keep exposed apps from reaching the rest of the cluster.
+* 2026-11-03: the public set is Overseerr (`requests`) only, instead of Jellyseerr and Wizarr (neither is deployed). Radarr, Sonarr, Sabnzbd and Prowlarr stay private: LAN and WireGuard only, as little exposure as possible. The in-cluster tunnel points straight at the Overseerr Service (`http://overseerr.media.svc.cluster.local:5055`) rather than at the Gateway, because the Gateway only serves `*.home.mkenkel.com`. The old `radarr` and `sabnzbd` hostnames on the Docker tunnel are not to be moved; the user removes them in Cloudflare when those Docker apps are stopped (the repo does not touch existing records).
 
 # Domain and DNS
 

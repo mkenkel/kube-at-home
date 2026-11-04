@@ -21,21 +21,20 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 | 1 Bootstrap | Done. `ansible/cluster.yml` built the cluster; Flux bootstrapped; Cilium adopted by Flux. |
 | 2 Networking | Done. L2 pool `.100-.200`, Gateway `gateway/home` at 192.168.15.100, wildcard `*.home.mkenkel.com`. |
 | 3 Storage | Longhorn done and tested with a PVC. NFS media export is live on TrueNAS (568:568); PV `media-nfs` and claim `media/media` are applied by Flux and a test pod on node-3 read and wrote it. Other nodes untested. |
-| 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. PSA `restricted` labels for `cert-manager`, `gateway` and `flux-system` are written on branch `psa-labels` (not pushed or applied). **Network policies (Phase 5) and backups not applied.** |
-| 5 Applications | Not started. |
+| 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. PSA `restricted` enforced on `cert-manager`, `gateway` and `flux-system` (applied 2026-11-03). **Network policies (Phase 5) and backups not applied.** |
+| 5 Applications | Media category in progress: Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr are defined in `apps/` (see [Phase 5](/phases/phase-5-applications.md)). Migrating the Docker apps is a manual runbook: [media migration](/runbooks/media-migration.md). The in-cluster `cloudflared` for the one public hostname (`requests`, Overseerr) is staged in `apps/home/cloudflared/` and waits on a tunnel token. |
 
 # Blocked on the user
 
 * Backups (Longhorn recurring backups, Velero): deferred until apps are hosted; configs and databases only, not media. The TrueNAS `k8s` pool is the candidate.
+* Media migration steps, plus a new Cloudflare tunnel token and an Access policy for `requests`, and removing the old `radarr`/`sabnzbd` tunnel hostnames in Cloudflare; see the [runbook](/runbooks/media-migration.md).
 * Optional TrueNAS tidy: remove the old `/mnt/Poolio` NFS share once nothing mounts it, and the unused `k8s` iSCSI/NFS leftovers.
 * OPNsense Unbound host override `*` / `home.mkenkel.com` -> 192.168.15.100 (was being set up; not confirmed done). Without it `grafana.home.mkenkel.com` does not resolve on the LAN.
-* Review and push branch `psa-labels` (PSA labels, see [Phase 4](/phases/phase-4-observability-security.md)). The user chose the small plan on 2026-11-03: labels now, network policies per app namespace in Phase 5.
 
 # Next steps, in order
 
-1. Merge the PSA label branch and confirm Flux applies it (the pods already running are not evicted).
-2. Phase 5 apps, one category per PR (media apps mount the `media/media` claim as one volume holding library and downloads).
-3. Backups once the dataset is chosen; first test restore.
+1. Media apps: merge, confirm the pods are Running, then follow the [migration runbook](/runbooks/media-migration.md) one app at a time. Then the other Phase 5 categories, one per PR.
+2. Backups once the dataset is chosen; first test restore.
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 
 # Resuming from another host

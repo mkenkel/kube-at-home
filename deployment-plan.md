@@ -97,7 +97,7 @@ Options for 4 nodes with 1 GbE:
 
 ### Phase 5: Applications
 Roll out one category at a time, one PR each, in this order (lowest risk first):
-1. Administration (Glance, Gitea, Portainer, Duplicati, last, once its backup plan exists; Netboot.xyz is hosted separately and Authentik is dropped)
+1. Administration (Glance, Gitea, Duplicati, last, once its backup plan exists; Netboot.xyz is hosted separately and Authentik is dropped)
 2. Notetaking: nothing deployed here (Bookstack, Quartz and Perlite are dropped).
 3. Media (the *arr stack, Jellyseerr, Wizarr, Notifiarr, Tautulli if you use Plex). They share the TrueNAS media volume and need consistent UID/GID. The media server itself (Jellyfin/Plex) is on a dedicated box; Jellyseerr, Wizarr and Tautulli just point at it, so it needs to be reachable from the cluster.
 4. File management: nothing deployed here (Nextcloud, Immich, Syncthing and 0x0.st are dropped).
@@ -111,8 +111,8 @@ The app list on the media side is mostly the same shape (one container, one conf
 
 Cilium (Gateway API) is the in-cluster reverse proxy. Cloudflare Tunnel is only the path from the internet to it.
 
-- **Private (default):** LAN + the existing WireGuard on the router. Covers Gitea, Grafana, Portainer and so on; Jellyfin/Plex streaming is handled by its own box. These apps keep their own local logins.
-- **Public via Cloudflare Tunnel:** only a handful, probably just Jellyseerr and Wizarr. `cloudflared` runs in the cluster and points at the Gateway Service.
+- **Private (default):** LAN + the existing WireGuard on the router. Covers Gitea, Grafana and so on; Jellyfin/Plex streaming is handled by its own box. These apps keep their own local logins.
+- **Public via Cloudflare Tunnel:** only Overseerr (`requests`), plus Wizarr if it is deployed. `cloudflared` runs in the cluster and points straight at the app Service.
 - **Auth for public apps:** Cloudflare Access (free up to 50 users) in front, instead of Authentik. Caveats:
   - It only protects tunnel traffic; LAN/WireGuard access hits the apps directly.
   - Mobile/API clients (mobile apps) can't do the Access login without service tokens or bypass rules, so use WireGuard for those.

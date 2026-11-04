@@ -1,0 +1,39 @@
+# Isolates the media namespace. The apps talk to each other, take traffic from
+# the Cilium Gateway, and reach DNS and anything outside the cluster (indexers,
+# Usenet servers, TMDB, the Plex box on the LAN). They cannot reach other
+# namespaces (Longhorn UI, Prometheus, Alertmanager, etcd metrics, other apps),
+# so a compromised public app cannot pivot into the cluster.
+# The NFS mount is made by the kubelet on the node and is not pod traffic.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: media-isolation
+  namespace: media
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - ingress
+    # The in-cluster cloudflared, for Overseerr (the only public app).
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cloudflared
+      toPorts:
+        - ports:
+            - port: "5055"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - {}
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+    - toEntities:
+        - world

@@ -1,0 +1,10 @@
+# Not yet listed in apps/home/kustomization.yaml: the pods need the secret first.
+# 1. Create and encrypt the token (see knowledge/runbooks/media-migration.md).
+# 2. Uncomment the secret below and add `- cloudflared` to apps/home/kustomization.yaml.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - networkpolicy.yaml
+  # - cloudflared-token.sops.yaml
