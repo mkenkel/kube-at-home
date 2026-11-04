@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-03 (NFS applied)
+* **Update**: Merged PR #1 and Flux applied the `media` namespace, PV `media-nfs` and claim `media/media` (Bound). A throwaway pod running as 568:568 mounted it from node-3, listed the library, created and deleted a file, and was removed. Only node-3 was tested. See [Phase 3](/phases/phase-3-storage.md).
+
 ## 2026-11-03
 * **Update**: TrueNAS media export is live: `192.168.15.24:/mnt/Poolio/media`, owner 568:568 (Mapall), mounted by the Docker host and the Plex box. Added `infrastructure/configs/storage/` (namespace `media`, NFS `PersistentVolume` `media-nfs`, claim `media`); `kustomize build` and `yamllint` pass; not pushed or applied. Backups deferred until apps exist, `k8s` pool noted as the candidate. See [Storage](/decisions/storage.md) and [Phase 3](/phases/phase-3-storage.md).
 
