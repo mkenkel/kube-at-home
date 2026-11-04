@@ -1,7 +1,7 @@
 ---
 type: Runbook
 title: Move the media apps from Docker to the cluster
-description: Order, commands and rollback for moving Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr from the dockery Docker stack to the cluster.
+description: What was deployed, the order and method used on 2026-11-03 to move Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr off the dockery Docker stack, the pitfalls found, and how to roll back.
 tags: [runbook, media, migration, phase-5]
 status: draft
 generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
@@ -9,84 +9,86 @@ sources:
   - id: ansible
     resource: /home/matt/repos/ansible/playbooks/templates/docker-compose.yml
     title: Docker stack on dockery (outside this repo)
+  - id: seerr
+    resource: https://docs.seerr.dev/migration-guide/
+    title: Seerr migration guide
 ---
 
-All steps here are **[human]**: they change running apps. Nothing in this runbook has been run yet.
+This was carried out on 2026-11-03 for all five apps. The Docker copies of Prowlarr, Sonarr, Radarr and Sabnzbd are stopped (not removed) and their config folders under `/home/whally/` are untouched; they are the rollback. The Docker Overseerr is still running so the public `requests` hostname keeps loading until the tunnel cutover below.
 
-# What the PR deploys
+# What is deployed
 
-* Namespace `media` (PSA `baseline`), apps from `apps/base/` rendered by the bjw-s `app-template` chart 5.3.0, one HelmRelease each: Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr.
-* Hostnames on the Gateway: `sonarr`, `radarr`, `sabnzbd`, `prowlarr`, `overseerr` + `.home.mkenkel.com`. These need the OPNsense Unbound override for `*.home.mkenkel.com` -> 192.168.15.100 ([open questions](/open-questions.md)).
-* Each app has a Longhorn config volume named after the app (`sonarr`, `radarr`, ...; Sonarr and Radarr 10Gi, others 2Gi) that is kept if the release is removed. Sonarr, Radarr and Sabnzbd also mount the `media` claim at `/media`.
-* All of them run as 568:568 (LinuxServer `PUID`/`PGID`; Overseerr ignores them). Timezone is `America/New_York`.
-* Plan-doc tools replaced by what you run today: Prowlarr instead of Jackett, Overseerr instead of Jellyseerr. Lidarr, Notifiarr, Tautulli and Wizarr are not in this PR.
-* Sabnzbd completes into `/media/downloads/complete` and unpacks in `/media/downloads/incomplete`, on the NFS volume, not on a node disk: the nodes have one NVMe that also holds etcd, and heavy unpack I/O there is a risk. Library and downloads sit in one mount, so imports are renames.
+* Namespace `media` (PSA `baseline`), apps in `apps/base/` rendered by the bjw-s `app-template` chart 5.3.0, one HelmRelease each: Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr (now running Seerr, see the last section).
+* Gateway hostnames `<app>.home.mkenkel.com`, which need the OPNsense Unbound override for `*.home.mkenkel.com` -> 192.168.15.100.
+* A Longhorn config volume per app, named after it (Sonarr and Radarr 10Gi, others 2Gi), kept if the release is removed. Sonarr, Radarr and Sabnzbd also mount the `media` claim at `/media`, so library and downloads are one mount and imports are renames.
+* LinuxServer apps run as 568:568 through `PUID`/`PGID`. Timezone `America/New_York`.
+* Sabnzbd completes into `/media/downloads/complete` and unpacks in `/media/downloads/incomplete` on NFS, not on a node disk: each node has one NVMe that also holds etcd.
+* Tools differ from the plan doc: Prowlarr instead of Jackett, Overseerr/Seerr instead of Jellyseerr. Lidarr, Notifiarr, Tautulli and Wizarr are not deployed.
 
-# Service names did not change
+# Order and method used
 
-The Docker stack reaches apps by container name (`sabnzbd`, `sonarr`, `radarr`). The cluster Services have the same names and ports in the same namespace, so download clients, indexer apps and Overseerr's Sonarr/Radarr entries keep working after a restore without editing.
+Prowlarr, Sonarr, Radarr, Sabnzbd, Overseerr. Each was checked before the next. The apps' own backup and restore (Sonarr, Radarr, Prowlarr) and their HTTP APIs were used; everything can also be done in the web UI.
 
-# Before you start
+## Prowlarr, Sonarr, Radarr
 
-1. PR merged, Flux applied, `kubectl -n media get pods` shows all five Running (they start with empty default config).
-2. DNS override in place so the hostnames resolve.
-3. Let the Sabnzbd queue finish on Docker; do not move mid-download.
-4. Keep the Docker config folders under `/home/whally/` untouched for a few weeks. They are the rollback.
-5. **Do not let two instances of the same app manage the library.** Stop the Docker copy once its cluster twin works.
-6. Stopping Docker Overseerr takes down the public `requests` hostname that the Docker `cloudflared` serves until you move it (see the last section). Radarr and Sabnzbd are not meant to be public: once their Docker copies are stopped, remove the old `radarr` and `sabnzbd` hostnames from the Docker tunnel in Cloudflare (your action; this repo does not change existing records).
+1. Check both sides run the same version (a backup restores only into the same or a newer version) and that the Docker queue is empty.
+2. Back up the Docker app (API `Backup` command or System > Backup > Backup Now). The zip appears in `/home/whally/<app>/config/Backups/manual/` and holds only `<app>.db`, `config.xml` and `INFO`.
+3. Stop the Docker app, so two instances never manage the library.
+4. Restore into the cluster app: System > Backup > Restore Backup, or `POST /api/v3/system/backup/restore/upload`. **Restart the pod afterwards** (`kubectl -n media rollout restart deploy/<app>`). Restoring replaces `config.xml`, so the running app still holds the old API key and its own restart call fails with 401.
+5. **Copy `MediaCover`.** Posters and banners are not in the backup. Stream it over SSH: `ssh whally@<dockery> 'sudo tar czf - -C /home/whally/<app>/config MediaCover' | kubectl -n media exec -i deploy/<app> -- sh -c 'tar xzf - -C /config && chown -R 568:568 /config/MediaCover'` (Sonarr 28 MB, Radarr 153 MB).
+6. Fix paths. The restored database points at `/media/tv/...` (Sonarr) and `/media/movies/...` (Radarr), which do not exist in the cluster, so the apps report a missing root folder and skip disk cleanup (nothing is deleted). Add `/media/TV Shows` or `/media/Movies` as the root folder and set each series or movie path explicitly with `moveFiles=false`, after checking every folder with files exists on disk. Do not rely on the Mass Editor's root folder change: it can derive the folder name from the naming format instead of keeping the existing one. Then remove the old root folder entry. **Radarr only:** its movie collections have their own root folder and must be updated too (30 of them here) or health reports "Missing root folder for movie collection".
+7. **Download client.** The restored Sonarr and Radarr download client pointed at the Docker host by IP (`192.168.15.25:8080`), not at the name `sabnzbd`. Change the host to `sabnzbd` (same port and API key) and press Test.
+8. Test the indexers and check System > Health.
 
-# Order
+Prowlarr here had one indexer (NZBgeek) and no applications, so only steps 1 to 4 and a restart applied.
 
-Prowlarr, Sonarr, Radarr, Sabnzbd, Overseerr. One app at a time; check it works before the next.
+## Sabnzbd
 
-## Prowlarr, Sonarr, Radarr (built-in backup)
+Sabnzbd rewrites its ini when it exits, so never edit the file inside a running pod.
 
-1. In the Docker app: System > Backup > Backup Now, download the zip (scheduled backups are also in the app's `Backups` folder under `/home/whally/<app>/config/`).
-2. In the cluster app: System > Backup > Restore Backup > upload the zip. The app restarts itself.
-3. Stop the Docker app: `docker stop sonarr` (and so on).
-4. Sonarr and Radarr only, fix paths. The restored database points at `/media/tv/...` and `/media/movies/...`, which do not exist in the cluster.
-   * Sonarr: Settings > Media Management > Root Folders > add `/media/TV Shows`. Series > Mass Editor > select all > Root Folder `/media/TV Shows` > Save. Answer **No** when asked to move files.
-   * Radarr: same with `/media/Movies` and Movies > Mass Editor.
-   * Check one series and one movie in the UI, then run Update Library on both.
-5. Check the download client entries (host `sabnzbd`, port 8080) and indexers, and press Test.
+1. Copy `/home/whally/sabnzbd/sabnzbd.ini` (owned by uid 568, mode 600: read it with `sudo cat` over SSH). The Docker copy can keep running meanwhile.
+2. In the copy set `download_dir = /media/downloads/incomplete` and `complete_dir = /media/downloads/complete`, and append `sabnzbd.home.mkenkel.com,` to `host_whitelist`. The Docker config had the two directory settings swapped relative to their names.
+3. Scale the cluster Sabnzbd to zero, mount its volume in a throwaway busybox pod, copy the file to `/config/sabnzbd.ini`, delete the pod, scale back to one. LinuxServer's init fixes ownership.
+4. **Whitelist the service names.** Sonarr and Radarr reach Sabnzbd as `sabnzbd:8080`, and Sabnzbd answers 403 "Hostname verification failed" to any host not in `host_whitelist`. Add `sabnzbd`, `sabnzbd.media`, `sabnzbd.media.svc` and `sabnzbd.media.svc.cluster.local`, for example through its API (`mode=set_config&section=misc&keyword=host_whitelist`), which saves the ini itself.
+5. Press Test on the Usenet server in the UI.
+6. Stop the Docker Sabnzbd only after the Docker Sonarr and Radarr are stopped, and with its queue empty: they used it as their download client.
 
-## Sabnzbd (copy the ini with the pod stopped)
+## Overseerr
 
-Sabnzbd rewrites its ini when it exits, so a file copied into a running pod can be overwritten. Copy with the app scaled to zero.
-
-1. On dockery: `docker stop sabnzbd`. Copy `/home/whally/sabnzbd/sabnzbd.ini` to your workstation.
-2. Edit the copy: set `complete_dir = /media/downloads/complete`, `download_dir = /media/downloads/incomplete`, and add `sabnzbd.home.mkenkel.com` to `host_whitelist` (otherwise the new hostname is refused). Server and category settings stay as they are.
-3. `kubectl -n media scale deploy/sabnzbd --replicas=0`
-4. Start a helper pod that mounts the `sabnzbd` volume at `/config` (a busybox pod running `sleep 3600`), `kubectl cp sabnzbd.ini media/<helper>:/config/sabnzbd.ini`, then delete the helper.
-5. `kubectl -n media scale deploy/sabnzbd --replicas=1`. LinuxServer's init fixes the ownership of `/config` to 568.
-6. Open `sabnzbd.home.mkenkel.com`, check the Usenet server test and the folders. The API key is unchanged, so Sonarr and Radarr need no edit.
-
-## Overseerr (copy settings and database with the pod stopped)
-
-1. `docker stop overseerr`. Copy `settings.json` and the `db` folder from `/home/whally/overseerr/config/` to your workstation.
-2. `kubectl -n media scale deploy/overseerr --replicas=0`, then use a helper pod on the `overseerr` volume (mounted at `/app/config`) as above, copy both in, delete the helper.
-3. `kubectl -n media scale deploy/overseerr --replicas=1`. Check Settings > Services: Plex, Sonarr and Radarr entries use the same names and should test green. Users and requests come across with the database.
+1. Briefly stop the Docker container for a consistent SQLite copy (`db/` holds `db.sqlite3` plus its `-wal` and `-shm` files) and copy `settings.json` and `db`. Start it again if the public hostname must stay up.
+2. In the copied `settings.json` replace the Sonarr and Radarr entries' host and port (they were `192.168.15.25:8989` and `:7878`) with `sonarr:8989` and `radarr:7878`.
+3. Scale the cluster Overseerr to zero, replace `db/` and `settings.json` with a helper pod, scale up.
+4. Fix the folders new requests are sent to, which were `/media/tv` and `/media/movies`: set them to `/media/TV Shows` and `/media/Movies` through Overseerr's API (`PUT /settings/sonarr/<id>` with the entry minus its read-only `id`), not by editing the file while it runs.
+5. Compare against Docker: request count (122) and users (1) matched. Test the Sonarr, Radarr and Plex connections from inside the pod.
 
 # Rollback
 
-Per app: scale the cluster Deployment to zero (`kubectl -n media scale deploy/<app> --replicas=0`) and `docker start <app>` on dockery. The Docker config was not changed. If Sonarr or Radarr already imported or renamed files in the cluster, that is on the shared library and does not roll back; Sonarr and Radarr note moves in their history.
+Scale the cluster app to zero (`kubectl -n media scale deploy/<app> --replicas=0`) and `docker start <app>` on dockery. If Sonarr or Radarr already imported or renamed files in the cluster, that is on the shared library and does not roll back. After a restore the Docker app's download client and Overseerr entries still point where they did before.
 
 # After the move
 
-* Remove the migrated apps from the Ansible `docker-compose.yml` template (outside this repo) so the next playbook run does not bring them back.
-* Image tags are pinned inside the HelmReleases and Renovate here does not bump them; update by hand or add a Renovate rule later.
-* Network policy `media-isolation` allows ingress from the Gateway and the namespace only, and egress to the namespace, DNS and anything outside the cluster. If a page does not load through the Gateway after applying, suspect it first and remove `networkpolicy.yaml` from `apps/home/media/kustomization.yaml` to confirm.
+* The Ansible `docker-compose.yml` template for dockery is outside this repo and was left alone on purpose, because `dockery` is expected to join the cluster later. Until then **do not run that playbook**: it still defines the migrated apps and would start the Docker copies again.
+* The old public hostnames `radarr.mkenkel.com` and `sabnzbd.mkenkel.com` on the Docker tunnel should be removed in Cloudflare by the user; Radarr and Sabnzbd are not meant to be public. The repo does not change existing records.
+* Image tags are pinned inside the HelmReleases and Renovate here does not bump them.
+* Network policy `media-isolation` allows ingress from the Gateway, the namespace and the in-cluster `cloudflared` (port 5055 only), and egress to the namespace, DNS and anything outside the cluster. Verified from the Sonarr pod: other apps and the internet reachable, Prometheus, Grafana and the Longhorn UI blocked.
+* Two API keys (Sabnzbd's and Sonarr's) were printed into the working session while migrating. Both are LAN-only; rotate them when convenient (regenerate, then update the entries that use them).
 
-# Public hostname: `requests` (Overseerr only)
+# Overseerr is now Seerr
 
-Only Overseerr is public. Radarr, Sonarr, Sabnzbd and Prowlarr are LAN and WireGuard only. The in-cluster `cloudflared` is written and staged in `apps/home/cloudflared/` but not switched on, because its pods cannot start without the tunnel token. Nothing here changes Cloudflare records until you do it. Cloudflare dashboard wording may differ from the names below.
+Overseerr's repository is archived (last release 1.35.0, 2026-02-15). Its successor Seerr migrates an existing Overseerr config and database in place on first start; treat that as one-way. Per the [migration guide](https://docs.seerr.dev/migration-guide/), the image is `ghcr.io/seerr-team/seerr` (the HelmRelease pins `v3.5.1`), it runs as uid 1000 (`node`) so `/app/config` must be owned by 1000:1000, and the Kubernetes settings are `fsGroup: 1000`, `fsGroupChangePolicy: OnRootMismatch` and a non-root, no-escalation, all-capabilities-dropped, `RuntimeDefault` security context. The release, Service, route and volume keep the name `overseerr`.
+
+Preparation done before the switch: the cluster Overseerr config (`settings.json` and `db`) was backed up and the volume chowned to 1000:1000 while Overseerr was scaled down. Rollback is to restore that backup into the volume and revert the image change. The Docker Overseerr config is a second, older fallback.
+
+# Public hostname: `requests`
+
+Only Seerr is public. Radarr, Sonarr, Sabnzbd and Prowlarr are LAN and WireGuard only. The in-cluster `cloudflared` is written and staged in `apps/home/cloudflared/` but not switched on, because its pods cannot start without the tunnel token. Nothing here changes Cloudflare records until you do it. Cloudflare dashboard wording may differ from the names below.
 
 1. In Cloudflare Zero Trust, create a new tunnel (a second one, not the Docker `homelab-tunnel`) and copy its token. Do not add the hostname yet.
 2. Put the token in an encrypted secret, from the repo root, with your age key available (replace `<TOKEN>`; do not paste it anywhere else):
    `kubectl create secret generic cloudflared-token -n cloudflared --from-literal=token='<TOKEN>' --dry-run=client -o yaml | sops --encrypt --filename-override apps/home/cloudflared/cloudflared-token.sops.yaml /dev/stdin > apps/home/cloudflared/cloudflared-token.sops.yaml`
 3. Uncomment `cloudflared-token.sops.yaml` in `apps/home/cloudflared/kustomization.yaml`, add `- cloudflared` to `apps/home/kustomization.yaml`, and send it through Git like everything else. The tunnel shows as Healthy when both pods connect.
-4. Create a Cloudflare Access application and policy for `requests` (allow only the people who use Overseerr). Mobile and API clients cannot pass the Access login without a service token.
-5. Once the cluster Overseerr works over its LAN name: in the old tunnel remove the `requests` public hostname, then in the new tunnel add it with the service URL `http://overseerr.media.svc.cluster.local:5055`. Cloudflare repoints the DNS record; expect a short gap.
+4. Create a Cloudflare Access application and policy for `requests` (allow only the people who use it). Mobile and API clients cannot pass the Access login without a service token.
+5. Once the cluster Seerr works over its LAN name: stop the Docker Overseerr (re-copy its database first if it took new requests you want to keep), then in the old tunnel remove the `requests` public hostname, and in the new tunnel add it with the service URL `http://overseerr.media.svc.cluster.local:5055`. Cloudflare repoints the DNS record; expect a short gap.
 6. Rollback: put the hostname back on the Docker tunnel and start the Docker Overseerr.
 
 See [open questions](/open-questions.md) and [exposure](/decisions/exposure-access.md).
