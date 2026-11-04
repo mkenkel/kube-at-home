@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: alertmanager-ntfy
+    namespace: monitoring
+type: Opaque
+stringData:
+    token: ENC[AES256_GCM,data:bx+niaT/iEsbEAItSHxyOj4aAhWI2MxsvAhJdwtz1Mw=,iv:Iox5wv1KYS4gdoONZ2OyERXRn9RDj4lR4va67d0f3AY=,tag:7MJvGB66a7ZI/x1/VCPM/g==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBDZ2lUOEZpRXNiblBaMDU5
+            U2ZqSXpLRlVrZGlQKzYxTTdFaFJNeU5QMkJ3CnE4Q3RtSzZxRzNubjFkbXd0UXdM
+            MWI3NzdQQ2MzandYSU54ZEgwRDhUZUEKLS0tIDZmMVJXOFdPeFk3cmVpRWlkWlBt
+            S0NuUXg0WS83TVFYY2ZZc1F1OWtMb2MKJ1bvrwSt9UbUU3tfk+wS9jvE5CDLrllj
+            YQe3tG7rwk0WwSrMyhVgt4T0uB/n/jv9oFjlxqpdXeJ9l6AMu5vrYw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1cf0ee6n2c55zyzhgdngzrw3xu86mu9mdae28mdha4kzr9x2h8g2qnwputp
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-04T03:20:48Z"
+    mac: ENC[AES256_GCM,data:tqX2GYKLa2LwLag0mQY63g3AYuWECz11RZRNwTxrdf1kkGR1YN+mahNp62ZXRpFll4h7swJAAX/WO0Vh/ZYfbFvnoudNmhurbai6lvlucuP/FURW5xtfxK/puQk+hTyFGabNXd8aVKY0ZV+TwkhfLumIVbKkhgx3m/fxJyMytSg=,iv:k0KmZpRBarMMpOFe/1LPMZQaS90A45wxWIuM5778hm4=,tag:QjdslyxGsh5XKEhavZg9DA==,type:str]
+    version: 3.13.3

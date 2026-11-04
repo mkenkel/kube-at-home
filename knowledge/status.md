@@ -4,7 +4,7 @@ title: Current status and handoff
 description: Where the cluster and repo stand, what is blocked on the user, and how to resume from another host.
 tags: [status, handoff]
 status: draft
-generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-04T00:00:00Z }
 sources:
   - id: log
     resource: /log.md
@@ -21,14 +21,14 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 | 1 Bootstrap | Done. `ansible/cluster.yml` built the cluster; Flux bootstrapped; Cilium adopted by Flux. |
 | 2 Networking | Done. L2 pool `.100-.200`, Gateway `gateway/home` at 192.168.15.100, wildcard `*.home.mkenkel.com`. |
 | 3 Storage | Longhorn done and tested with a PVC. NFS media export is live on TrueNAS (568:568); PV `media-nfs` and claim `media/media` are applied by Flux and a test pod on node-3 read and wrote it. Other nodes untested. |
-| 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. PSA `restricted` enforced on `cert-manager`, `gateway` and `flux-system` (applied 2026-11-03). **Network policies (Phase 5) and backups not applied.** |
+| 4 Observability and security | Prometheus, Grafana, control-plane metrics, Loki and Alloy done; the Longhorn ServiceMonitor was found to be scraping nothing and is being fixed with the alerting work. PSA `restricted` enforced on `cert-manager`, `gateway` and `flux-system` (applied 2026-11-03). **Network policies (Phase 5) and backups not applied.** |
 | 5 Applications | Media category deployed and migrated 2026-11-03: Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr run in the `media` namespace with their old data (see [Phase 5](/phases/phase-5-applications.md) and the [migration runbook](/runbooks/media-migration.md)). The Overseerr release runs Seerr v3.5.1 since the in-place upgrade. The in-cluster `cloudflared` for the one public hostname (`requests`) is staged in `apps/home/cloudflared/` and waits on a tunnel token. Docker Prowlarr, Sonarr, Radarr and Sabnzbd are stopped, the Docker Overseerr still runs. |
 
 # Blocked on the user
 
-* Create the TrueNAS dataset `k8s/longhorn-backups` and its NFS share for the four node IPs, then merge the backups PR and check the first backups and a test restore: [backup runbook](/runbooks/backup-restore.md). Velero is dropped.
+* Check the first scheduled backups of all six config volumes (first run 02:30 UTC); a manual Prowlarr backup and restore already worked. See the [backup runbook](/runbooks/backup-restore.md). Velero is dropped.
+* Set up the ntfy app on the iPhone and send a test alert: [alerting runbook](/runbooks/alerting.md). The credentials are in `~/ntfy-phone-credentials.txt` on the workstation until moved to the password manager.
 * A new Cloudflare tunnel token (as a SOPS secret) and an Access policy for `requests`, then moving that hostname off the Docker tunnel; and removing the old `radarr` and `sabnzbd` tunnel hostnames in Cloudflare. See the [runbook](/runbooks/media-migration.md).
-* Rotate the Sabnzbd and Sonarr API keys (both were printed into a working session; LAN-only).
 * `dockery` (the Docker host) is meant to join the cluster later. The Ansible repo for it is outside this repo and was left alone, so do not run its playbook: it still defines the migrated apps and would restart the Docker copies.
 * Optional TrueNAS tidy: remove the old `/mnt/Poolio` NFS share once nothing mounts it, and the unused `k8s` iSCSI/NFS leftovers.
 * OPNsense Unbound host override `*` / `home.mkenkel.com` -> 192.168.15.100 (was being set up; not confirmed done). Without it `grafana.home.mkenkel.com` does not resolve on the LAN.
@@ -36,7 +36,7 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 # Next steps, in order
 
 1. The public cutover (tunnel token, Access, move `requests`), then retire the Docker Overseerr. Then the other Phase 5 categories, one per PR.
-2. Config volume backups: TrueNAS share, merge, first backups, first test restore (see Blocked).
+2. Alerts for Flux failures and certificate expiry; then the other Phase 5 categories, one per PR.
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 
 # Resuming from another host
@@ -62,4 +62,5 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 * Grafana Explore with the Loki datasource, and the Grafana login through the Gateway in a browser.
 * kube-apiserver logs about 20 `grpc: addrConn.createTransport failed ... 127.0.0.1:2379: operation was canceled` warnings per 10 minutes per node; probably benign, unconfirmed, and not known whether it predates the etcd metrics change. Etcd shows 0 restarts.
 * Longhorn behaviour on node failure; its replicas landed on node-1..3 only in the one test. `longhornctl check preflight` was not run.
-* Whether the GitHub Actions workflow has ever run (`flux diff` is not set up).
+* `flux diff` is not set up. (The GitHub Actions `validate` workflow has run and passed on every PR so far.)
+* The Sabnzbd and Sonarr API keys that were printed into a working session were rotated on 2026-11-03; old copies remain in the stopped Docker config folders, an old Sonarr backup zip, `~/sabnzbd.ini` and `~/overseerr-config-backup-20261103.tgz` on the workstation.

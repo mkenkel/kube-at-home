@@ -1,0 +1,116 @@
+# ntfy: push notifications for alerts. LAN only, behind the Gateway, with auth on and
+# everything denied by default. Users, tokens and access rules come from config; the
+# secret ntfy-auth (SOPS) holds the password hashes and the Alertmanager token.
+# `upstream-base-url` makes the iPhone app wake up instantly: ntfy.sh only receives the
+# message ID and a hash of the topic URL, never the message text.
+# Details: knowledge/runbooks/alerting.md
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ntfy
+  namespace: ntfy
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: app-template
+      version: 5.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      ntfy:
+        # The data volume is ReadWriteOnce, so the old pod must stop first.
+        strategy: Recreate
+        pod:
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+        containers:
+          app:
+            image:
+              repository: docker.io/binwiederhier/ntfy
+              tag: v2.36.0
+            args:
+              - serve
+            env:
+              TZ: America/New_York
+              NTFY_BASE_URL: https://ntfy.home.mkenkel.com
+              NTFY_LISTEN_HTTP: ":8080"
+              NTFY_BEHIND_PROXY: "true"
+              NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+              NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+              NTFY_AUTH_DEFAULT_ACCESS: deny-all
+              # The alertmanager user may only publish to `alerts`, the phone user only read it.
+              NTFY_AUTH_ACCESS: "alertmanager:alerts:wo,phone:alerts:ro"
+              NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+            envFrom:
+              - secretRef:
+                  name: ntfy-auth
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /v1/health
+                    port: 8080
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /v1/health
+                    port: 8080
+    service:
+      app:
+        controller: ntfy
+        ports:
+          http:
+            port: 80
+            targetPort: 8080
+    route:
+      app:
+        hostnames:
+          - ntfy.home.mkenkel.com
+        parentRefs:
+          - name: home
+            namespace: gateway
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: 80
+    persistence:
+      data:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        retain: true
+        globalMounts:
+          - path: /var/lib/ntfy

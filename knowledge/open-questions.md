@@ -3,7 +3,7 @@ type: Open Questions
 title: Open questions
 description: Unresolved decisions that block or shape later phases.
 status: draft
-generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-04T00:00:00Z }
 sources:
   - id: dp
     resource: /deployment-plan.md
@@ -18,6 +18,7 @@ sources:
 
 # Resolved
 
+* Alert channel (2026-11-04): self-hosted ntfy on the LAN, read on an iPhone. See [Alerting](/decisions/alerting.md).
 * Backups (2026-11-03): Longhorn recurring backups of the config volumes to NFS dataset `k8s/longhorn-backups` on TrueNAS; Velero dropped. See [Backups](/decisions/backups.md) and the [runbook](/runbooks/backup-restore.md).
 * Media apps (2026-11-03): the app set is what the user runs (Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr, now Seerr), existing config migrated, one `/media` mount, only Seerr public. See [Phase 5](/phases/phase-5-applications.md).
 * Portainer (2026-11-03): dropped; removed from the plan and the Phase 5 list.

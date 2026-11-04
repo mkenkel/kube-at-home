@@ -13,6 +13,7 @@ OKF v0.2 bundle for the home Kubernetes cluster (4x M70q Gen2, kubeadm). Narrati
 * [Networking](decisions/networking.md) - Cilium, L2 announcements now, BGP deferred, Gateway API
 * [Storage](decisions/storage.md) - Longhorn for configs/DBs, TrueNAS NFS for media
 * [Exposure and access](decisions/exposure-access.md) - LAN/WireGuard default, Cloudflare Tunnel for two apps
+* [Alerting](decisions/alerting.md) - ntfy on the LAN, Alertmanager delivery, scope
 * [Backups](decisions/backups.md) - Local Longhorn/Velero to TrueNAS, offsite Duplicati deferred
 
 # Phases
@@ -29,6 +30,8 @@ OKF v0.2 bundle for the home Kubernetes cluster (4x M70q Gen2, kubeadm). Narrati
 * [Move the media apps from Docker](runbooks/media-migration.md) - migration order, commands and rollback for Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr
 
 * [Back up and restore the config volumes](runbooks/backup-restore.md) - what Longhorn backs up, TrueNAS setup, checks, restore test
+
+* [Alerts and notifications (ntfy)](runbooks/alerting.md) - how alerts reach the phone, what is alerted on, setup and testing
 
 # Other
 

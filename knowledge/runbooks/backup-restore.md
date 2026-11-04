@@ -4,7 +4,7 @@ title: Back up and restore the app config volumes
 description: What Longhorn backs up, how to set up the TrueNAS target, how to check it, how to test a restore, and what is deliberately not covered.
 tags: [runbook, backup, longhorn, truenas]
 status: draft
-generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-04T00:00:00Z }
 sources:
   - id: longhorn
     resource: https://longhorn.io/docs/1.10.0/snapshots-and-backups/scheduling-backups-and-snapshots/
@@ -41,6 +41,8 @@ Nothing below touches the existing `k8s/nfs` and `k8s/iscsi` leftovers or the me
 
 # Turning it on and checking it
 
+**An available target is not a working one.** `AVAILABLE true` only proves Longhorn can list the share. The first real backup is the test: when the TrueNAS dataset was owned by root while Mapall maps writes to 568, the target looked healthy but the backup failed with `mkdir .../backupstore: permission denied`. Make `apps` (568) the owner of the dataset.
+
 The target URL in `infrastructure/configs/longhorn/backuptarget.yaml` is `nfs://192.168.15.24:/mnt/k8s/longhorn-backups`. It is set on the existing `default` BackupTarget directly, not through the Helm chart value: the chart's default-backup-store setting did not look like it would update a target that already exists, and the object is annotated so Flux never deletes it.
 
 After the TrueNAS steps and once Flux has applied the change:
@@ -52,14 +54,20 @@ After the TrueNAS steps and once Flux has applied the change:
 
 # Test a restore **[human]**, then quarterly
 
-A backup that has never been restored is a hope. Use the smallest volume (Prowlarr, 2Gi):
+A backup that has never been restored is a hope. Done on 2026-11-03 with the smallest volume (Prowlarr), without the Longhorn UI:
 
-1. `kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80` and open `http://localhost:8080`. The UI has no authentication, so keep it on localhost only.
-2. Backup > pick the `prowlarr` volume > the latest backup > Restore, with a new volume name such as `restore-test-prowlarr`.
-3. In the UI use Create PV/PVC for that restored volume in a scratch namespace, mount it in a throwaway pod (`busybox`), and check `prowlarr.db` and `config.xml` are there and recent.
-4. Delete the scratch namespace and the restored volume.
+1. Make a backup by hand if none exists yet: a `Snapshot` object (`spec.volume`, `spec.createSnapshot: true`) and a `Backup` object (`spec.snapshotName`, `spec.backupMode: incremental`, label `backup-volume: <volume>`) in `longhorn-system`; wait for `status.state: Completed`.
+2. Create a StorageClass with provisioner `driver.longhorn.io`, `reclaimPolicy: Delete`, and parameters `numberOfReplicas: "1"` and `fromBackup: <the backup's status.url>`, a scratch namespace, and a PVC using that class.
+3. Mount the PVC read-only in a throwaway pod. Check that the files are there, that `config.xml` has the same checksum as the live volume, and run `PRAGMA integrity_check` on a copy of the SQLite database.
+4. Delete the namespace and the StorageClass; the restored volume goes with its claim. Keep the real backup.
+
+The Longhorn UI works too (`kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80`; it has no authentication, so keep it on localhost).
 
 # Restoring for real
 
 * A single app: scale its Deployment to zero, restore the newest good backup over a new volume as above, then point the PVC at it (or delete the damaged PVC and recreate it from the restored volume with the same name and namespace, which is what the HelmRelease expects), scale up.
 * A rebuilt cluster: bring up the cluster, Flux and Longhorn from Git, apply the backup target, restore each volume from its backup with Create PV/PVC using the original names (`sonarr`, `radarr`, `sabnzbd`, `prowlarr`, `overseerr` in `media`, Grafana's PVC in `monitoring`) before the apps start, then let Flux converge.
+
+# Why the firewall logged blocked traffic from TrueNAS
+
+While the share did not exist, OPNsense logged "default deny / state violation" for TrueNAS connecting to a Longhorn manager pod address (`10.244.x.x`). Longhorn mounts the NFS target inside its own pod, so the NFS client advertises the pod IP, and the NFSv4.0 callback channel (tried as a fallback after 4.2 and 4.1 failed) points at an address nothing outside the cluster can route. It stopped once the share worked and the mount succeeded at NFSv4.2. If it returns, look at the backup target's status first.
