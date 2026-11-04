@@ -1,6 +1,7 @@
 # Gitea takes the web UI from the Gateway and Glance's health check, and git over SSH from
-# the LAN. It can reach DNS and nothing else: no internet, no other namespace. That blocks
-# mirroring from GitHub and outgoing webhooks until a rule is added (see runbooks/gitea.md).
+# the LAN. It can reach DNS and github.com / api.github.com on 443 (mirrors and imports) and
+# nothing else: no other internet host, no other namespace. Webhooks to other hosts stay blocked
+# until a rule is added (see runbooks/gitea.md).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -43,3 +44,18 @@ spec:
         - ports:
             - port: "53"
               protocol: ANY
+          # toFQDNs below only works when Cilium sees the pod's DNS answers, so DNS goes through
+          # Cilium's DNS proxy. Every name may be looked up; only the ones below may be connected to.
+          rules:
+            dns:
+              - matchPattern: "*"
+    # Pull and push mirrors, and importing a repository. api.github.com is for importing issues
+    # and pull requests along with the code; a plain mirror only needs github.com. Release assets
+    # (githubusercontent.com hosts) are not allowed.
+    - toFQDNs:
+        - matchName: github.com
+        - matchName: api.github.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
