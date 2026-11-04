@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (Glance)
+* **Update**: Added Glance, the home page with live up/down checks, at `glance.home.mkenkel.com` (LAN only, namespace `glance`, stateless, config in a ConfigMap). Icons are left out because Glance loads them from a public CDN. Config checked by running the same v0.8.7 binary locally. Gitea moves to last, at the user's request. See [Phase 5](/phases/phase-5-applications.md).
+
 ## 2026-11-04 (Hubble UI)
 * **Update**: Added an HTTPRoute for the already-running Hubble UI at `hubble.home.mkenkel.com` (LAN and WireGuard only, no login). No Cilium change, so no agent restart. See [Exposure and access](/decisions/exposure-access.md).
 

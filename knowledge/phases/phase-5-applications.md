@@ -4,7 +4,7 @@ title: "Phase 5: Applications"
 description: One category per PR, lowest risk first, using a shared app-template chart.
 tags: [phase, apps]
 status: draft
-generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-04T00:00:00Z }
 sources:
   - id: dp
     resource: /deployment-plan.md
@@ -16,7 +16,7 @@ sources:
 
 Use the bjw-s `app-template` chart for the one-container/one-PVC/one-ingress shape. One PR per category, in order:
 
-1. Administration: Glance, Gitea, then Duplicati last (needs its backup plan). Portainer is dropped (2026-11-03).
+1. Administration: Glance, then Gitea last (the user's choice, 2026-11-04). Duplicati is deferred and Portainer is dropped.
 2. Notetaking: nothing deployed here.
 3. Media: Jackett, Sonarr, Radarr, Lidarr, Sabnzbd, Jellyseerr, Wizarr, Notifiarr, Tautulli. Shared TrueNAS media volume; the media server box must be reachable from the cluster. Only Overseerr/Seerr (`requests`) is public ([exposure](/decisions/exposure-access.md)).
 4. File management: nothing deployed here.
@@ -33,3 +33,8 @@ Use the bjw-s `app-template` chart for the one-container/one-PVC/one-ingress sha
 Decisions for this category (2026-11-03): the app set is what the user runs today (Prowlarr instead of the plan's Jackett, Overseerr instead of Jellyseerr, now running Seerr; Lidarr, Notifiarr, Tautulli and Wizarr are not included); existing config is migrated, not rebuilt; library and downloads share one `/media` mount so imports are renames; Sabnzbd keeps incomplete downloads on the NFS volume to stay off the etcd disk; Only Overseerr stays public, through a new in-cluster tunnel that points straight at its Service instead of the Gateway; Radarr, Sonarr, Sabnzbd and Prowlarr are LAN-only.
 
 Monitoring apps (Prometheus, Grafana) land in [Phase 4](/phases/phase-4-observability-security.md). Game servers are out of scope.
+
+# Administration (second category)
+
+- [ ] [repo] Glance v0.8.7 (`apps/base/glance`, ConfigMap `glance-config` and the rest in `apps/home/administration/`), namespace `glance` (PSA `restricted`), at `https://glance.home.mkenkel.com` on the LAN: a home page with live up/down checks for the media apps, Grafana, Hubble UI, ntfy, Plex and TrueNAS, plus two links. Stateless, no login, no icons (Glance loads them from cdn.jsdelivr.net, so the page makes no outside requests). Each check runs from the Glance pod against the same names used in a browser; login-page redirects count as up. Config validated by running the same v0.8.7 binary locally: all 10 checks and both links render and the page references no external hosts. Written 2026-11-04; tick when it is applied and the checks show the apps as up from inside the cluster.
+- [ ] [repo] Gitea, last: not started. Open choices: SQLite or PostgreSQL, HTTPS only or also SSH, repos included in the Longhorn config backups.
