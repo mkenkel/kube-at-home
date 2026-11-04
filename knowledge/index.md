@@ -28,6 +28,8 @@ OKF v0.2 bundle for the home Kubernetes cluster (4x M70q Gen2, kubeadm). Narrati
 
 * [Move the media apps from Docker](runbooks/media-migration.md) - migration order, commands and rollback for Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr
 
+* [Back up and restore the config volumes](runbooks/backup-restore.md) - what Longhorn backs up, TrueNAS setup, checks, restore test
+
 # Other
 
 * [Current status and handoff](status.md) - where things stand, what is blocked, how to resume on another host

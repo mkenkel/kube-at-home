@@ -22,11 +22,11 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 | 2 Networking | Done. L2 pool `.100-.200`, Gateway `gateway/home` at 192.168.15.100, wildcard `*.home.mkenkel.com`. |
 | 3 Storage | Longhorn done and tested with a PVC. NFS media export is live on TrueNAS (568:568); PV `media-nfs` and claim `media/media` are applied by Flux and a test pod on node-3 read and wrote it. Other nodes untested. |
 | 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. PSA `restricted` enforced on `cert-manager`, `gateway` and `flux-system` (applied 2026-11-03). **Network policies (Phase 5) and backups not applied.** |
-| 5 Applications | Media category deployed and migrated 2026-11-03: Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr run in the `media` namespace with their old data (see [Phase 5](/phases/phase-5-applications.md) and the [migration runbook](/runbooks/media-migration.md)). Overseerr is being upgraded to Seerr v3.5.1 in place. The in-cluster `cloudflared` for the one public hostname (`requests`) is staged in `apps/home/cloudflared/` and waits on a tunnel token. Docker Prowlarr, Sonarr, Radarr and Sabnzbd are stopped, the Docker Overseerr still runs. |
+| 5 Applications | Media category deployed and migrated 2026-11-03: Sonarr, Radarr, Sabnzbd, Prowlarr and Overseerr run in the `media` namespace with their old data (see [Phase 5](/phases/phase-5-applications.md) and the [migration runbook](/runbooks/media-migration.md)). The Overseerr release runs Seerr v3.5.1 since the in-place upgrade. The in-cluster `cloudflared` for the one public hostname (`requests`) is staged in `apps/home/cloudflared/` and waits on a tunnel token. Docker Prowlarr, Sonarr, Radarr and Sabnzbd are stopped, the Docker Overseerr still runs. |
 
 # Blocked on the user
 
-* Backups (Longhorn recurring backups, Velero): deferred until apps are hosted; configs and databases only, not media. The TrueNAS `k8s` pool is the candidate.
+* Create the TrueNAS dataset `k8s/longhorn-backups` and its NFS share for the four node IPs, then merge the backups PR and check the first backups and a test restore: [backup runbook](/runbooks/backup-restore.md). Velero is dropped.
 * A new Cloudflare tunnel token (as a SOPS secret) and an Access policy for `requests`, then moving that hostname off the Docker tunnel; and removing the old `radarr` and `sabnzbd` tunnel hostnames in Cloudflare. See the [runbook](/runbooks/media-migration.md).
 * Rotate the Sabnzbd and Sonarr API keys (both were printed into a working session; LAN-only).
 * `dockery` (the Docker host) is meant to join the cluster later. The Ansible repo for it is outside this repo and was left alone, so do not run its playbook: it still defines the migrated apps and would restart the Docker copies.
@@ -35,8 +35,8 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 
 # Next steps, in order
 
-1. Verify the Seerr upgrade after it rolls out, then the public cutover (tunnel token, Access, move `requests`), then retire the Docker Overseerr. Then the other Phase 5 categories, one per PR.
-2. Backups of the config volumes (they now hold real data) once the dataset is chosen; first test restore.
+1. The public cutover (tunnel token, Access, move `requests`), then retire the Docker Overseerr. Then the other Phase 5 categories, one per PR.
+2. Config volume backups: TrueNAS share, merge, first backups, first test restore (see Blocked).
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 
 # Resuming from another host

@@ -11,8 +11,8 @@ sources:
     title: Deployment plan, Phase 4
 ---
 
-* Local: Longhorn recurring backups + Velero to a dedicated TrueNAS dataset (NFS, or S3 via MinIO). The dataset is still undecided; see [open questions](/open-questions.md).
-* Decision 2026-11-03: wait until the apps are hosted before setting up backups. Back up app configs and databases (Longhorn volumes), not Movies or TV. The TrueNAS pool `k8s` (separate from `Poolio`, about 8.95 TiB free, holding unused leftovers from an earlier attempt) is the likely target; nothing has been created there.
+* Local (decided 2026-11-03): Longhorn recurring backups of the app config volumes (Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr/Seerr, Grafana) to an NFS dataset `k8s/longhorn-backups` on the TrueNAS `k8s` pool, exported to the four node IPs only. Nightly (keep 14) and weekly (keep 8). Not backed up: Prometheus, Loki, media. Details and steps: [backup and restore runbook](/runbooks/backup-restore.md).
+* Velero is dropped: manifests and SOPS secrets are in Git, and the cluster is rebuilt from Ansible and Flux. There are no etcd snapshots by choice.
 * Offsite: Duplicati to a cloud provider, scope and target not planned. It does not point at TrueNAS. Deployed last in Phase 5 administration.
 * Git backs up manifests; the age key and Duplicati passphrase live in the password manager.
 * Media is replaceable and covered by TrueNAS. Test restore at least quarterly.

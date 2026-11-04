@@ -1,0 +1,16 @@
+# Where Longhorn writes backups: a dataset on the TrueNAS `k8s` pool, exported over NFS
+# to the four node IPs only (setup steps in knowledge/runbooks/backup-restore.md).
+# Longhorn creates the `default` target itself, empty and unavailable; this fills it in.
+# Until the share exists the target simply shows as unavailable.
+# Flux must never delete this object, hence the prune annotation.
+apiVersion: longhorn.io/v1beta2
+kind: BackupTarget
+metadata:
+  name: default
+  namespace: longhorn-system
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  backupTargetURL: nfs://192.168.15.24:/mnt/k8s/longhorn-backups
+  credentialSecret: ""
+  pollInterval: 5m0s
