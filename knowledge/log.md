@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (Headlamp verified, on Glance)
+* **Update**: Verified Headlamp on the cluster: a real token read namespaces, pods, Flux HelmReleases and nodes through it and was refused (403) for Secrets, deleting a Deployment, creating a ConfigMap and exec; the pod's own account has no role bindings. A scare (`kubectl auth can-i get nodes/proxy` answering yes) was `kubectl` ignoring the subresource; explicit access reviews say no, and the runbook now uses `--subresource=proxy`. Added Headlamp as an eleventh check on the Glance page, opening only its pod port in `glance-isolation` and `headlamp-isolation`. See the [Headlamp runbook](/runbooks/headlamp.md).
+
 ## 2026-11-04 (Headlamp)
 * **Update**: Added Headlamp, a read-only cluster UI, at `headlamp.home.mkenkel.com` (LAN). Login is a short-lived token for `headlamp-viewer` (built-in `view` role plus read-only access to nodes, volumes and the custom resources in use; no Secrets, no exec, no writes). The chart binds the pod's own ServiceAccount to `cluster-admin` by default; that is turned off so the pod has no permissions. Also ticks Glance as applied: all 10 checks are OK from inside the cluster, and a ConfigMap change reaches the pod after about a minute and Glance then reloads by itself. See the [Headlamp runbook](/runbooks/headlamp.md).
 

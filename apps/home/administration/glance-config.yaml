@@ -75,6 +75,9 @@ data:
                   - title: ntfy
                     url: https://ntfy.home.mkenkel.com
                     check-url: http://ntfy.ntfy.svc.cluster.local/v1/health
+                  - title: Headlamp
+                    url: https://headlamp.home.mkenkel.com
+                    check-url: http://headlamp.headlamp.svc.cluster.local/
               - type: monitor
                 title: Infrastructure
                 cache: 1m
