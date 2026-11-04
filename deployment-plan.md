@@ -112,7 +112,7 @@ The app list on the media side is mostly the same shape (one container, one conf
 Cilium (Gateway API) is the in-cluster reverse proxy. Cloudflare Tunnel is only the path from the internet to it.
 
 - **Private (default):** LAN + the existing WireGuard on the router. Covers Gitea, Grafana and so on; Jellyfin/Plex streaming is handled by its own box. These apps keep their own local logins.
-- **Public via Cloudflare Tunnel:** only a handful, Overseerr (`requests`), Radarr and Sabnzbd, which already have public hostnames, plus Wizarr if it is deployed. `cloudflared` runs in the cluster and points at the Gateway Service.
+- **Public via Cloudflare Tunnel:** only Overseerr (`requests`), plus Wizarr if it is deployed. `cloudflared` runs in the cluster and points straight at the app Service.
 - **Auth for public apps:** Cloudflare Access (free up to 50 users) in front, instead of Authentik. Caveats:
   - It only protects tunnel traffic; LAN/WireGuard access hits the apps directly.
   - Mobile/API clients (mobile apps) can't do the Access login without service tokens or bypass rules, so use WireGuard for those.

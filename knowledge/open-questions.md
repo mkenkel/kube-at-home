@@ -14,7 +14,7 @@ sources:
 
 * OPNsense Unbound override for `*.home.mkenkel.com` -> 192.168.15.100: done or not?
 * Which TrueNAS dataset or share holds the local Longhorn/Velero backups? Deferred until apps are hosted; the `k8s` pool is the candidate, see [Backups](/decisions/backups.md). Blocks [Phase 4](/phases/phase-4-observability-security.md).
-* Public hostnames `requests` (Overseerr), `radarr` and `sabnzbd`: wanted, to be served by an in-cluster `cloudflared`. Needs a new Cloudflare tunnel token as a SOPS secret and Cloudflare Access policies (recommended on all three, especially Radarr and Sabnzbd), then a per-hostname move off the Docker tunnel. See [Exposure](/decisions/exposure-access.md) and the [migration runbook](/runbooks/media-migration.md).
+* Public Overseerr (`requests`): wanted, to be served by an in-cluster `cloudflared`. Needs a new Cloudflare tunnel token as a SOPS secret and a Cloudflare Access policy, then moving the hostname off the Docker tunnel. Radarr and Sabnzbd are not public: the user removes their old hostnames in Cloudflare. See [Exposure](/decisions/exposure-access.md) and the [migration runbook](/runbooks/media-migration.md).
 * Duplicati: what to back up and where to upload. Deferred until everything else is settled; see [Backups](/decisions/backups.md).
 
 # Resolved

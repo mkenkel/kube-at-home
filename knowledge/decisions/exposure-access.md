@@ -15,7 +15,7 @@ sources:
 * Authentik is dropped. Private apps keep local logins.
 * Cloudflare Access fronts public apps. Caveats: it only covers tunnel traffic, mobile/API clients need WireGuard or service tokens, Wizarr invite paths need a bypass, and never proxy media streaming through the tunnel.
 * Cilium NetworkPolicies keep exposed apps from reaching the rest of the cluster.
-* 2026-11-03: the public set is now Overseerr (`requests`), Radarr and Sabnzbd, the apps that already have public hostnames on the Docker tunnel, instead of Jellyseerr and Wizarr (neither is deployed). Radarr and Sabnzbd are admin interfaces, so Cloudflare Access in front of them is strongly recommended. The in-cluster tunnel points straight at the app Services (`http://<app>.media.svc.cluster.local:<port>`) rather than at the Gateway, because the Gateway only serves `*.home.mkenkel.com`.
+* 2026-11-03: the public set is Overseerr (`requests`) only, instead of Jellyseerr and Wizarr (neither is deployed). Radarr, Sonarr, Sabnzbd and Prowlarr stay private: LAN and WireGuard only, as little exposure as possible. The in-cluster tunnel points straight at the Overseerr Service (`http://overseerr.media.svc.cluster.local:5055`) rather than at the Gateway, because the Gateway only serves `*.home.mkenkel.com`. The old `radarr` and `sabnzbd` hostnames on the Docker tunnel are not to be moved; the user removes them in Cloudflare when those Docker apps are stopped (the repo does not touch existing records).
 
 # Domain and DNS
 

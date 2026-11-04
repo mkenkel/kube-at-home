@@ -1,5 +1,5 @@
-# cloudflared only needs DNS, the Cloudflare edge, and the public apps in the
-# media namespace. It cannot reach any other namespace.
+# cloudflared only needs DNS, the Cloudflare edge, and Overseerr (the only public
+# app) in the media namespace. It cannot reach any other namespace.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -22,10 +22,6 @@ spec:
       toPorts:
         - ports:
             - port: "5055"
-              protocol: TCP
-            - port: "7878"
-              protocol: TCP
-            - port: "8080"
               protocol: TCP
     - toEntities:
         - world
