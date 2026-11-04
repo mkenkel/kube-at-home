@@ -5,3 +5,4 @@ resources:
   - l2.yaml
   - certificate.yaml
   - gateway.yaml
+  - hubble-httproute.yaml
