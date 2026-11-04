@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (alert priority)
+* **Update**: Critical alerts now arrive urgent. ntfy's built-in alertmanager template sets no priority, so a custom template (ConfigMap `ntfy-templates`, used as `?template=cluster`) sets it: critical firing = 5, warning = 3, resolved = 2. Tested locally with sample payloads first, including an alert with no severity label. The template is a plain ConfigMap because app-template runs Helm's templating over `{{ }}` in values, which broke the first attempt. Also ticks the alerting items as applied and verified. See the [alerting runbook](/runbooks/alerting.md).
+
 ## 2026-11-04 (Flux and certificate alerts)
 * **Update**: Added alerts for Flux resources that stay unready, are suspended or lose a controller, and for certificates that expire within 21 days or are not ready. Flux state comes from kube-state-metrics' custom resource state config (copied from fluxcd/flux2-monitoring-example for the four kinds in use; the standard collectors stay on, which the example disables); cert-manager's controller metrics are scraped through a ServiceMonitor defined with the other monitoring configs. Each set has a rule that fires if its own metrics disappear. See the [alerting runbook](/runbooks/alerting.md).
 

@@ -107,6 +107,15 @@ spec:
               - identifier: app
                 port: 80
     persistence:
+      # Alertmanager posts to /alerts?template=cluster; the template is a plain ConfigMap
+      # (apps/home/administration/ntfy-templates.yaml) because app-template would run Helm's
+      # own templating over `{{ }}` in values. Restart the pod after editing it.
+      templates:
+        type: configMap
+        name: ntfy-templates
+        globalMounts:
+          - path: /etc/ntfy/templates
+            readOnly: true
       data:
         type: persistentVolumeClaim
         accessMode: ReadWriteOnce
