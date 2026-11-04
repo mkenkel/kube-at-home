@@ -4,7 +4,7 @@ title: Current status and handoff
 description: Where the cluster and repo stand, what is blocked on the user, and how to resume from another host.
 tags: [status, handoff]
 status: draft
-generated: { by: claude/claude-sonnet-5-5, at: 2026-11-02T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
 sources:
   - id: log
     resource: /log.md
@@ -20,21 +20,22 @@ Snapshot taken 2026-11-02 from the live cluster: node-1..4 Ready (v1.36.6); Flux
 | 0 Provisioning | Done. Netboot items about headless boot and the NVMe check are unticked in [Phase 0](/phases/phase-0-provisioning.md) because the user never confirmed them. |
 | 1 Bootstrap | Done. `ansible/cluster.yml` built the cluster; Flux bootstrapped; Cilium adopted by Flux. |
 | 2 Networking | Done. L2 pool `.100-.200`, Gateway `gateway/home` at 192.168.15.100, wildcard `*.home.mkenkel.com`. |
-| 3 Storage | Longhorn done and tested with a PVC. **NFS media volume not started** (needs TrueNAS details). |
+| 3 Storage | Longhorn done and tested with a PVC. NFS media export is live on TrueNAS (568:568) and manifests are written in `infrastructure/configs/storage/` on branch `nfs-media-volume`, **not yet pushed or applied** and not yet mounted from a node. |
 | 4 Observability and security | Prometheus, Grafana, control-plane metrics, Longhorn ServiceMonitor, Loki and Alloy done. **Network policies, PSA labels and backups not applied.** |
 | 5 Applications | Not started. |
 
 # Blocked on the user
 
-* NFS media volume: TrueNAS address, export path, and the UID/GID for the *arr stack and download client.
-* Backups (Longhorn recurring backups, Velero): which TrueNAS dataset or share to use.
+* Review and push branch `nfs-media-volume`, then confirm Flux applies it and test the claim with a throwaway pod (cluster change; confirm first).
+* Backups (Longhorn recurring backups, Velero): deferred until apps are hosted; configs and databases only, not media. The TrueNAS `k8s` pool is the candidate.
+* Optional TrueNAS tidy: remove the old `/mnt/Poolio` NFS share once nothing mounts it, and the unused `k8s` iSCSI/NFS leftovers.
 * OPNsense Unbound host override `*` / `home.mkenkel.com` -> 192.168.15.100 (was being set up; not confirmed done). Without it `grafana.home.mkenkel.com` does not resolve on the LAN.
 * Decision on security hardening, see [Phase 4](/phases/phase-4-observability-security.md): recommended small version (PSA labels now, network policies per app namespace in Phase 5) or skip until Phase 5. Nothing has been applied for this.
 
 # Next steps, in order
 
 1. Resolve the security decision above, then label the four clean namespaces.
-2. NFS media volume once the TrueNAS details arrive, then Phase 5 apps one category per PR.
+2. Apply the NFS media volume, then Phase 5 apps one category per PR (media apps mount one volume holding library and downloads).
 3. Backups once the dataset is chosen; first test restore.
 4. Optional: ServiceMonitors for Loki and Alloy, Cilium/Hubble metrics (changes `cilium/values.yaml` and the HelmRelease together, restarts agents).
 

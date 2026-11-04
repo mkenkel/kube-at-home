@@ -4,7 +4,7 @@ title: "Phase 3: Storage"
 description: Longhorn for configs and databases, shared NFS media volume from TrueNAS.
 tags: [phase, longhorn, nfs]
 status: draft
-generated: { by: claude/claude-sonnet-5-5, at: 2026-10-27T00:00:00Z }
+generated: { by: claude/claude-sonnet-5-5, at: 2026-11-03T00:00:00Z }
 sources:
   - id: dp
     resource: /deployment-plan.md
@@ -12,8 +12,8 @@ sources:
 ---
 
 - [x] [repo] Applied 2026-11-01 (HelmRelease Ready, all pods Running; a 1Gi test PVC bound, mounted, and kept data; the volume was healthy with 3 replicas on node-1..3; removed afterwards): Longhorn v1.13.0 `HelmRelease` (default `StorageClass`, 3 replicas, disk-usage limits for the single-NVMe layout; needs Kubernetes >= 1.34)
-- [ ] [human] TrueNAS NFS export for media with the agreed UID/GID
-- [ ] [repo] NFS `PersistentVolume`/`PersistentVolumeClaim` for the media volume
+- [x] [human] TrueNAS NFS export for media with the agreed UID/GID: done 2026-11-03. `192.168.15.24:/mnt/Poolio/media` (a plain folder in the `Poolio` dataset holding `Movies`, `TV Shows` and `downloads`), allowed from `192.168.15.0/24`, Mapall `apps` (568:568), Maproot empty. The Docker host (`dockery`) and the Plex box (`plexy`) already mount it and Plex plays from it. The old `/mnt/Poolio` share still exists and should be removed once nothing uses it.
+- [ ] [repo] NFS `PersistentVolume`/`PersistentVolumeClaim` for the media volume: written 2026-11-03 in `infrastructure/configs/storage/` (namespace `media`, PV `media-nfs`, claim `media`), `kustomize build` and `yamllint` pass; not pushed or applied, and no node has mounted it yet. After Flux applies it, test with a throwaway pod that mounts the claim and writes a file (expect owner 568:568 on TrueNAS).
 - [x] Node prerequisites checked 2026-11-01 on all four nodes: `iscsid` active, `iscsi_tcp` loaded, `open-iscsi` and `nfs-common` installed, `multipathd` inactive, `findmnt`/`blkid`/`lsblk`/`curl` present, root disk 916G with ~865G free. `longhornctl check preflight` was not run.
 
 Decision: [storage](/decisions/storage.md).
