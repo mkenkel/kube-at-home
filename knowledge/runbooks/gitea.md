@@ -22,7 +22,7 @@ Gitea 28.3.0 (rootless image) in the `gitea` namespace. GitHub stays the source 
 * **Git over SSH:** `git@git.mkenkel.com:<user>/<repo>.git`, port 22. The Gateway only carries HTTP(S), so SSH has its own `LoadBalancer` Service, `gitea-ssh`, with the fixed address **192.168.15.101** from the Cilium pool (announced by ARP on the LAN like the Gateway's .100). Inside the pod Gitea's built-in SSH server listens on 2222. Its host keys live on the data volume, so they survive restarts and your `known_hosts` entry stays valid.
 * **Storage:** SQLite and the repositories on one 10Gi Longhorn volume, `retain: true`, in the nightly and weekly config backups ([backups](/runbooks/backup-restore.md)). Backups are crash-consistent; Git and SQLite both recover from that.
 * **Config:** there is no `app.ini` to edit. The image rebuilds it from the `GITEA__section__KEY` variables in `apps/base/gitea/helmrelease.yaml` at every start. The two secrets (`SECRET_KEY`, which protects stored 2FA secrets and tokens, and the OAuth2 JWT secret) are in the SOPS secret `gitea-secrets`. **Keep a copy of `SECRET_KEY` in the password manager: a restored database is useless for those without it.**
-* **Network policy:** `gitea-isolation` admits the Gateway and Glance on 3000 and the LAN on 2222, and lets Gitea reach DNS only.
+* **Network policy:** `gitea-isolation` admits the Gateway and Glance on 3000 and the LAN on 2222, and lets Gitea reach DNS and `github.com` / `api.github.com` on 443 only.
 
 # One-time setup **[human]**
 
@@ -45,9 +45,15 @@ Gitea 28.3.0 (rootless image) in the `gitea` namespace. GitHub stays the source 
 * Connection refused or times out from the LAN but works with `kubectl -n gitea port-forward deploy/gitea 2222:2222`: look at Hubble (`hubble.home.mkenkel.com`, namespace `gitea`) for a drop. Which Cilium identity the client is seen as depends on the node that answers ARP and where the pod runs, and `gitea-isolation` admits `world`, `remote-node` and `host` on 2222 for that reason.
 * "Host key verification failed" after a restore from backup means the data volume (and the host keys) were replaced; remove the old line from `known_hosts`.
 
-# Deliberately blocked: outgoing connections
+# Outgoing connections
 
-The policy gives Gitea DNS and nothing else, so **mirroring or migrating a repository from GitHub, push mirrors and webhooks do not work yet.** Gitea 28 also sends its outgoing Git operations through an internal proxy, so it is worth reading the 28.x notes before enabling any of them. To allow one, add an egress rule to `apps/home/administration/gitea-networkpolicy.yaml` for what you need (`toFQDNs` for `github.com`, port 443, is the narrowest). Pushing from your workstation over SSH needs none of that.
+`gitea-isolation` lets Gitea reach DNS plus **`github.com` and `api.github.com` on port 443**, and nothing else. That covers pull and push mirrors of GitHub repositories and importing one (New Migration > GitHub; a plain mirror needs only `github.com`, importing issues and pull requests also uses `api.github.com`). Pushing from your workstation over SSH needs none of it. Everything else is still blocked: webhooks to other hosts, other forges, and GitHub release assets (they come from `githubusercontent.com` hosts, so importing releases fails).
+
+How it works: Cilium matches hostnames only if it sees the pod's DNS answers, so the DNS rule goes through Cilium's DNS proxy (`rules.dns` with `matchPattern: "*"`, any name may be looked up) and the `toFQDNs` rule allows connecting to the addresses those two names resolved to. A mirror that suddenly stops syncing while `github.com` works from your browser: check Hubble (`hubble.home.mkenkel.com`, namespace `gitea`) for a drop, since GitHub's addresses change and the rule follows them only as fast as lookups happen.
+
+Gitea 28 also sends every outgoing Git operation through an internal proxy. Its default `lax` mode allows public hosts and refuses private addresses, so nothing needs configuring for GitHub; the network policy is the real limit. To add another host, add it to the `toFQDNs` list. A host on the LAN would also need the Gitea setting `[security] ALLOWED_HOST_LIST` (lax mode blocks private addresses).
+
+To import: sign in, New Migration > GitHub, paste the repository URL. A private repository needs a GitHub token (a fine-grained, read-only one is enough); paste it only into that form. A mirror has to keep its credentials to keep syncing, so assume the token is stored on the Gitea volume and therefore in its backups (not verified how Gitea protects it); for a one-off copy untick "This repository will be a mirror" and revoke the token afterwards.
 
 # Upgrades
 
