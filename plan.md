@@ -46,4 +46,3 @@
 - [ ] Duplicati
 - [ ] Gitea
 - [ ] Glance
-- [ ] Portainer

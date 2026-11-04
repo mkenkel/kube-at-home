@@ -16,6 +16,18 @@ spec:
         - {}
     - fromEntities:
         - ingress
+    # The in-cluster cloudflared, for the apps that are public.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cloudflared
+      toPorts:
+        - ports:
+            - port: "5055"
+              protocol: TCP
+            - port: "7878"
+              protocol: TCP
+            - port: "8080"
+              protocol: TCP
   egress:
     - toEndpoints:
         - {}

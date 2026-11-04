@@ -77,6 +77,17 @@ Per app: scale the cluster Deployment to zero (`kubectl -n media scale deploy/<a
 * Image tags are pinned inside the HelmReleases and Renovate here does not bump them; update by hand or add a Renovate rule later.
 * Network policy `media-isolation` allows ingress from the Gateway and the namespace only, and egress to the namespace, DNS and anything outside the cluster. If a page does not load through the Gateway after applying, suspect it first and remove `networkpolicy.yaml` from `apps/home/media/kustomization.yaml` to confirm.
 
-# Public Overseerr (not in this PR)
+# Public hostnames: `requests`, `radarr`, `sabnzbd`
 
-Chosen but needs things only you can provide: a Cloudflare tunnel and its token for an in-cluster `cloudflared`, a Cloudflare Access policy, and a deliberate move of the existing `requests` hostname off the Docker tunnel. The manifests are written once the token exists. See [open questions](/open-questions.md) and [exposure](/decisions/exposure-access.md).
+The in-cluster `cloudflared` is written and staged in `apps/home/cloudflared/` but not switched on, because its pods cannot start without the tunnel token. Nothing here changes Cloudflare records until you do it. Cloudflare dashboard wording may differ from the names below.
+
+1. In Cloudflare Zero Trust, create a new tunnel (a second one, not the Docker `homelab-tunnel`) and copy its token. Do not add hostnames yet.
+2. Put the token in an encrypted secret, from the repo root, with your age key available (replace `<TOKEN>`; do not paste it anywhere else):
+   `kubectl create secret generic cloudflared-token -n cloudflared --from-literal=token='<TOKEN>' --dry-run=client -o yaml | sops --encrypt --filename-override apps/home/cloudflared/cloudflared-token.sops.yaml /dev/stdin > apps/home/cloudflared/cloudflared-token.sops.yaml`
+3. Uncomment `cloudflared-token.sops.yaml` in `apps/home/cloudflared/kustomization.yaml`, add `- cloudflared` to `apps/home/kustomization.yaml`, and send it through Git like everything else. The tunnel shows as Healthy when both pods connect.
+4. Create Cloudflare Access applications and policies for `requests`, `radarr` and `sabnzbd` (allow only you, plus whoever uses Overseerr). Radarr and Sabnzbd are admin interfaces, so do not skip this for them. Mobile and API clients cannot pass the Access login without a service token.
+5. Cut over one hostname at a time, only after the cluster app works over the LAN name. In the old tunnel remove the public hostname, then in the new tunnel add it with the service URL: `http://overseerr.media.svc.cluster.local:5055`, `http://radarr.media.svc.cluster.local:7878` or `http://sabnzbd.media.svc.cluster.local:8080`. Cloudflare repoints the DNS record; expect a short gap.
+6. Sabnzbd refuses unknown hostnames: add `sabnzbd.mkenkel.com` to `host_whitelist` in the ini if it is not already there.
+7. Rollback is the reverse: put the hostname back on the Docker tunnel and start the Docker app.
+
+See [open questions](/open-questions.md) and [exposure](/decisions/exposure-access.md).
