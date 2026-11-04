@@ -1,4 +1,4 @@
-# Headlamp takes traffic from the Gateway only, and can reach DNS and the Kubernetes API
+# Headlamp takes traffic from the Gateway (and Glance's health check) only, and can reach DNS and the Kubernetes API
 # server (it forwards each user's token there) and nothing else.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -10,6 +10,14 @@ spec:
   ingress:
     - fromEntities:
         - ingress
+      toPorts:
+        - ports:
+            - port: "4466"
+              protocol: TCP
+    # Glance's health check.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: glance
       toPorts:
         - ports:
             - port: "4466"

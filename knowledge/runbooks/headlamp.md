@@ -40,7 +40,10 @@ These run as you and ask the API server what the viewer account may do (all shou
 * `kubectl auth can-i get secrets -A --as=system:serviceaccount:headlamp:headlamp-viewer` no
 * `kubectl auth can-i create pods/exec -A --as=system:serviceaccount:headlamp:headlamp-viewer` no
 * `kubectl auth can-i delete deployments -A --as=system:serviceaccount:headlamp:headlamp-viewer` no
+* `kubectl auth can-i get nodes --subresource=proxy --as=system:serviceaccount:headlamp:headlamp-viewer` no (the kubelet API). Write the subresource with `--subresource`: `kubectl auth can-i get nodes/proxy` ignores it and wrongly answers yes.
 * `kubectl auth can-i '*' '*' --as=system:serviceaccount:headlamp:headlamp` no (the pod's own account)
+
+For an exact answer, including which rule allowed it, create a `SubjectAccessReview` (resource, subresource, verb and the groups `system:serviceaccounts`, `system:serviceaccounts:headlamp`, `system:authenticated`). It is what the API server itself evaluates. Tested 2026-11-04: `nodes/proxy`, `nodes/log`, `nodes/stats`, `pods/exec` and Secrets are all denied for the viewer.
 
 # Cut off a token early
 
