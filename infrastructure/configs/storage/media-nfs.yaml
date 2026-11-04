@@ -1,0 +1,40 @@
+# Static NFS volume for the *arr stack, download client and anything else that
+# needs the media library. TrueNAS maps every client to apps (568:568) on this
+# export (Mapall), so pods see one owner whatever UID they run as.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-nfs
+spec:
+  # NFS does not enforce capacity; this only has to match the claim.
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  # Never delete media if the claim is removed.
+  persistentVolumeReclaimPolicy: Retain
+  # Empty class so the Longhorn default class does not take this claim.
+  storageClassName: ""
+  mountOptions:
+    - hard
+    - noatime
+  nfs:
+    server: 192.168.15.24
+    path: /mnt/Poolio/media
+  claimRef:
+    namespace: media
+    name: media
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: media-nfs
+  resources:
+    requests:
+      storage: 1Ti
