@@ -33,6 +33,8 @@ OKF v0.2 bundle for the home Kubernetes cluster (4x M70q Gen2, kubeadm). Narrati
 
 * [Alerts and notifications (ntfy)](runbooks/alerting.md) - how alerts reach the phone, what is alerted on, setup and testing
 
+* [Headlamp, the read-only cluster UI](runbooks/headlamp.md) - login with a short-lived token, what it can and cannot do, how to check it
+
 # Other
 
 * [Current status and handoff](status.md) - where things stand, what is blocked, how to resume on another host

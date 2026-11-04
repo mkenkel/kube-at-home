@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (Headlamp)
+* **Update**: Added Headlamp, a read-only cluster UI, at `headlamp.home.mkenkel.com` (LAN). Login is a short-lived token for `headlamp-viewer` (built-in `view` role plus read-only access to nodes, volumes and the custom resources in use; no Secrets, no exec, no writes). The chart binds the pod's own ServiceAccount to `cluster-admin` by default; that is turned off so the pod has no permissions. Also ticks Glance as applied: all 10 checks are OK from inside the cluster, and a ConfigMap change reaches the pod after about a minute and Glance then reloads by itself. See the [Headlamp runbook](/runbooks/headlamp.md).
+
 ## 2026-11-04 (Glance checks)
 * **Update**: Glance was applied and served its page, but all 8 checks that used Gateway names showed 403 `Access denied` (Plex and TrueNAS, checked on the LAN, were fine). Cause: Envoy applies the calling pod's egress policy to the backend it forwards to. Glance now checks each service's own health URL on its own port, the links keep the Gateway names, and `glance-isolation`, `media-isolation` and `ntfy-isolation` open exactly those ports. A green dot now means the service answers, not that its Gateway route works. Noted in [Networking](/decisions/networking.md).
 

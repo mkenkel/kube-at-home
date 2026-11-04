@@ -10,3 +10,8 @@ resources:
   - glance-networkpolicy.yaml
   - ../../base/ntfy
   - ../../base/glance
+  - headlamp-helmrepository.yaml
+  - headlamp-namespace.yaml
+  - headlamp-rbac.yaml
+  - headlamp-networkpolicy.yaml
+  - ../../base/headlamp

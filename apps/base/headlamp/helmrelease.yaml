@@ -1,0 +1,68 @@
+# Headlamp: a read-only web UI for the cluster, LAN only at https://headlamp.home.mkenkel.com.
+# You log in with a short-lived token for the ServiceAccount `headlamp-viewer`, which can only
+# read (RBAC in apps/home/administration/headlamp-rbac.yaml). The pod's own account has NO
+# permissions: the chart binds it to cluster-admin unless clusterRoleBinding.create is false.
+# How to get a token and what it can see: knowledge/runbooks/headlamp.md
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: headlamp
+  namespace: headlamp
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: headlamp
+      version: 0.46.0
+      sourceRef:
+        kind: HelmRepository
+        name: headlamp
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    image:
+      tag: v0.46.0
+    # The chart's default binds the pod's ServiceAccount to cluster-admin. Do not.
+    clusterRoleBinding:
+      create: false
+    config:
+      # Each user token is checked against the API server with its own permissions.
+      # Leave `unsafeUseServiceAccountToken` and `enableHelm` (chart defaults) off.
+      sessionTTL: 14400
+      oidc:
+        secret:
+          create: false
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 100
+      runAsGroup: 101
+      privileged: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    httpRoute:
+      enabled: true
+      parentRefs:
+        - name: home
+          namespace: gateway
+          sectionName: https
+      hostnames:
+        - headlamp.home.mkenkel.com
