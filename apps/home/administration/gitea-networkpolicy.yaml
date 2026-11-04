@@ -1,0 +1,45 @@
+# Gitea takes the web UI from the Gateway and Glance's health check, and git over SSH from
+# the LAN. It can reach DNS and nothing else: no internet, no other namespace. That blocks
+# mirroring from GitHub and outgoing webhooks until a rule is added (see runbooks/gitea.md).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: gitea-isolation
+  namespace: gitea
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    # Glance's health check.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: glance
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    # SSH arrives through the LoadBalancer IP. Depending on which node answers ARP and where the
+    # pod runs, the source is seen as the LAN client (world), another node (remote-node) or the
+    # node itself (host). The IP is only announced on the LAN.
+    - fromEntities:
+        - world
+        - remote-node
+        - host
+      toPorts:
+        - ports:
+            - port: "2222"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY

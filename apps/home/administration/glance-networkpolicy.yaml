@@ -69,5 +69,12 @@ spec:
         - ports:
             - port: "4466"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: gitea
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
     - toEntities:
         - world

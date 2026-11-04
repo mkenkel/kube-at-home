@@ -6,7 +6,7 @@
 # each Service instead: a pod that calls a Gateway name gets "Access denied" from Envoy, because
 # its own egress policy is applied to the backend the Gateway forwards to. So a green dot means
 # the service itself answers its health URL, not that the Gateway route works. The matching
-# ports are opened in glance-networkpolicy.yaml, media-isolation and ntfy-isolation.
+# ports are opened in glance-networkpolicy.yaml, media-isolation, ntfy-isolation and gitea-isolation.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -78,6 +78,9 @@ data:
                   - title: Headlamp
                     url: https://headlamp.home.mkenkel.com
                     check-url: http://headlamp.headlamp.svc.cluster.local/
+                  - title: Gitea
+                    url: https://gitea.home.mkenkel.com
+                    check-url: http://gitea-app.gitea.svc.cluster.local:3000/api/healthz
               - type: monitor
                 title: Infrastructure
                 cache: 1m

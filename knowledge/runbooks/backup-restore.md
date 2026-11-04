@@ -13,7 +13,7 @@ sources:
 
 # What is backed up
 
-* The config volumes of Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr/Seerr and Grafana. They hold the databases, settings and cover art that would be tedious to rebuild.
+* The config volumes of Sonarr, Radarr, Sabnzbd, Prowlarr, Overseerr/Seerr, Grafana and Gitea (its repositories and database). They hold the databases, settings and cover art that would be tedious to rebuild.
 * Not backed up on purpose: Prometheus and Loki data (replaceable metrics and logs, 30Gi each), and the media itself (it lives on TrueNAS).
 * Cluster state needs no backup: every manifest is in Git, secrets are SOPS-encrypted in Git, and the age key is in the password manager. There are no etcd snapshots; a lost control plane is rebuilt with the Ansible playbooks and Flux. Velero is not used for that reason.
 * No offsite copy yet (deferred). The backups sit on the same TrueNAS box as the media, on the separate `k8s` pool.
@@ -27,7 +27,7 @@ Two Longhorn recurring jobs in the group `config` (`infrastructure/configs/longh
 * `config-nightly`: every day 02:30, keep 14.
 * `config-weekly`: Sundays 03:30, keep 8.
 
-A volume is included when its PVC carries both labels `recurring-job.longhorn.io/source: enabled` and `recurring-job-group.longhorn.io/config: enabled`. Longhorn copies PVC labels to the volume periodically, and the `source` label is what makes the PVC win over Longhorn's automatic `default` group. The five app volumes get them through `persistence.config.labels` in their HelmReleases, Grafana through `grafana.persistence.extraPvcLabels`. **A new app's volume must be labelled the same way or it is not backed up.**
+A volume is included when its PVC carries both labels `recurring-job.longhorn.io/source: enabled` and `recurring-job-group.longhorn.io/config: enabled`. Longhorn copies PVC labels to the volume periodically, and the `source` label is what makes the PVC win over Longhorn's automatic `default` group. The five media app volumes get them through `persistence.config.labels` in their HelmReleases, Gitea through `persistence.data.labels`, Grafana through `grafana.persistence.extraPvcLabels`. **A new app's volume must be labelled the same way or it is not backed up.**
 
 # TrueNAS setup **[human]**
 
@@ -49,7 +49,7 @@ After the TrueNAS steps and once Flux has applied the change:
 
 * `kubectl -n longhorn-system get backuptargets.longhorn.io default` should show `AVAILABLE true`. If it stays false, read the `status.conditions` message: mount errors usually mean the host list, NFSv4 or the dataset owner.
 * `kubectl -n longhorn-system get recurringjobs.longhorn.io` lists both jobs.
-* `kubectl -n longhorn-system get volumes.longhorn.io --show-labels | grep recurring-job-group.longhorn.io/config` should list the six config volumes within a few minutes (the Prometheus and Loki volumes stay on the old `default` group, which has no jobs).
+* `kubectl -n longhorn-system get volumes.longhorn.io --show-labels | grep recurring-job-group.longhorn.io/config` should list the seven config volumes (six before Gitea) within a few minutes (the Prometheus and Loki volumes stay on the old `default` group, which has no jobs).
 * After the first 02:30 run, `kubectl -n longhorn-system get backups.longhorn.io` has an entry per volume and the share has a `backupstore` folder.
 
 # Test a restore **[human]**, then quarterly
