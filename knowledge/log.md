@@ -1,5 +1,8 @@
 # Update Log
 
+## 2026-11-04 (Flux and certificate alerts)
+* **Update**: Added alerts for Flux resources that stay unready, are suspended or lose a controller, and for certificates that expire within 21 days or are not ready. Flux state comes from kube-state-metrics' custom resource state config (copied from fluxcd/flux2-monitoring-example for the four kinds in use; the standard collectors stay on, which the example disables); cert-manager's controller metrics are scraped through a ServiceMonitor defined with the other monitoring configs. Each set has a rule that fires if its own metrics disappear. See the [alerting runbook](/runbooks/alerting.md).
+
 ## 2026-11-04 (alerting)
 * **Update**: Added alerting: self-hosted ntfy (LAN only, auth with default deny, iPhone wake-up via ntfy.sh), Alertmanager delivery to it, and Longhorn alert rules. Found that Prometheus could never scrape Longhorn because the chart's manager network policy admits only Longhorn pods; fixed with `networkPolicies.metricsScrapeSources` for Prometheus only. Rotated the leaked Sabnzbd and Sonarr API keys on 2026-11-03 (also updated Sonarr, Radarr and Seerr to the new keys). Folded in: the first backup and restore test of the Prowlarr volume, the dataset-permission pitfall, the NFSv4.0 callback explanation of the firewall noise, and CI having passed on every PR. See [Alerting](/decisions/alerting.md) and the [runbook](/runbooks/alerting.md).
 
