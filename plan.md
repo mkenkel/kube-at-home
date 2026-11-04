@@ -44,5 +44,5 @@
 
 ### Administration
 - [ ] Duplicati
-- [ ] Gitea
+- [x] Gitea
 - [ ] Glance
